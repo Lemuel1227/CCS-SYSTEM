@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './AcademicTracker.css';
 
 const MOCK_GRADES = {
@@ -20,16 +20,36 @@ const MOCK_GRADES = {
   'PED102': { grade: '1.00', status: 'PASSED' },
 };
 
-const AcademicTracker = () => {
-  const [courses, setCourses] = useState([]);
+const DEFAULT_COURSES = [
+  { id: '1', code: 'CCS101', desc: 'Introduction to Computing', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '2', code: 'CCS102', desc: 'Computer Programming 1', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '3', code: 'ETH101', desc: 'Ethics', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '4', code: 'MAT101', desc: 'Mathematics in the Modern World', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '5', code: 'NSTP1', desc: 'National Service Training Program 1', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '6', code: 'PED101', desc: 'Physical Education 1', units: 2, prereq: '--', year: 1, sem: 1 },
+  { id: '7', code: 'PSY100', desc: 'Understanding the Self', units: 3, prereq: '--', year: 1, sem: 1 },
+  { id: '8', code: 'CCS103', desc: 'Computer Programming 2', units: 3, prereq: 'CCS102', year: 1, sem: 2 },
+  { id: '9', code: 'CCS104', desc: 'Discrete Structures 1', units: 3, prereq: 'MAT101', year: 1, sem: 2 },
+  { id: '10', code: 'CCS105', desc: 'Human Computer Interaction 1', units: 3, prereq: 'CCS101', year: 1, sem: 2 },
+  { id: '11', code: 'CCS106', desc: 'Social and Professional Issues', units: 3, prereq: 'ETH101', year: 1, sem: 2 },
+  { id: '12', code: 'COM101', desc: 'Purposive Communication', units: 3, prereq: '--', year: 1, sem: 2 },
+  { id: '13', code: 'GAD101', desc: 'Gender and Development', units: 3, prereq: '--', year: 1, sem: 2 },
+  { id: '14', code: 'NSTP2', desc: 'National Service Training Program 2', units: 3, prereq: 'NSTP1', year: 1, sem: 2 },
+  { id: '15', code: 'PED102', desc: 'Physical Education 2', units: 2, prereq: 'PED101', year: 1, sem: 2 }
+];
 
-  useEffect(() => {
-    // Load courses from LocalStorage (managed by Admin)
-    const storedCourses = localStorage.getItem('ccs_courses');
-    if (storedCourses) {
-      setCourses(JSON.parse(storedCourses));
+const AcademicTracker = () => {
+  const [courses] = useState(() => {
+    try {
+      const storedCourses = localStorage.getItem('ccs_courses');
+      if (storedCourses) {
+        return JSON.parse(storedCourses);
+      }
+    } catch (e) {
+      console.error(e);
     }
-  }, []);
+    return DEFAULT_COURSES;
+  });
 
   // Compute Year & Semester Groupings
   const getCoursesForTerm = (year, sem) => {

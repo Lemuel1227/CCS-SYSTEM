@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Edit2, Trash2, X } from 'lucide-react';
 import './CourseManagement.css';
 
@@ -21,7 +21,19 @@ const DEFAULT_COURSES = [
 ];
 
 const CourseManagement = () => {
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState(() => {
+    try {
+      const savedCourses = localStorage.getItem('ccs_courses');
+      if (savedCourses) {
+        return JSON.parse(savedCourses);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    localStorage.setItem('ccs_courses', JSON.stringify(DEFAULT_COURSES));
+    return DEFAULT_COURSES;
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -34,16 +46,6 @@ const CourseManagement = () => {
     year: 1,
     sem: 1
   });
-
-  useEffect(() => {
-    const savedCourses = localStorage.getItem('ccs_courses');
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
-    } else {
-      setCourses(DEFAULT_COURSES);
-      localStorage.setItem('ccs_courses', JSON.stringify(DEFAULT_COURSES));
-    }
-  }, []);
 
   const saveToStorage = (updatedCourses) => {
     setCourses(updatedCourses);
@@ -61,7 +63,7 @@ const CourseManagement = () => {
       const updated = courses.map(c => c.id === editingCourse.id ? { ...formData, id: c.id } : c);
       saveToStorage(updated);
     } else {
-      const newCourse = { ...formData, id: Date.now().toString() };
+      const newCourse = { ...formData, id: window.crypto.randomUUID() };
       saveToStorage([...courses, newCourse]);
     }
     closeModal();

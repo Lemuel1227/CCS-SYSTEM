@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Activity, Calendar, Clock, User, HeartPulse, ShieldAlert,
   FileCheck, AlertCircle
@@ -8,29 +8,22 @@ import './MyMedicalRecords.css';
 const MOCK_STUDENT_ID = '2023-0001';
 
 const MyMedicalRecords = () => {
-  const [record, setRecord] = useState(null);
-  const [history, setHistory] = useState([
-    { id: 'h1', date: '2023-11-15', type: 'Annual Checkup', doctor: 'Dr. Sarah Smith', notes: 'All clear. Inhaler prescription renewed.', status: 'Cleared' },
-    { id: 'h2', date: '2023-05-22', type: 'Clinic Visit', doctor: 'Nurse Joy', notes: 'Treated for mild fever. Given paracetamol.', status: 'Sent Home' },
-    { id: 'h3', date: '2022-10-10', type: 'Annual Checkup', doctor: 'Dr. Sarah Smith', notes: 'Asthma noted. Baseline set.', status: 'Cleared' }
-  ]);
-
-  useEffect(() => {
-    // Attempt to pull the user's specific record from the Admin's mocked database
+  const [record] = useState(() => {
     try {
       const stored = localStorage.getItem('ccs_medical_records');
       if (stored) {
         const parsed = JSON.parse(stored);
         const myRecord = parsed.find(r => r.studentId === MOCK_STUDENT_ID);
         if (myRecord) {
-          setRecord(myRecord);
-          return;
+          return myRecord;
         }
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error parsing medical records:', error);
+    }
     
     // Fallback if not found in LocalStorage
-    setRecord({ 
+    return { 
       id: '1', 
       studentId: MOCK_STUDENT_ID, 
       name: 'John Doe', 
@@ -38,8 +31,14 @@ const MyMedicalRecords = () => {
       conditions: 'Asthma', 
       lastCheckup: '2023-11-15', 
       status: 'Cleared' 
-    });
-  }, []);
+    };
+  });
+
+  const [history] = useState([
+    { id: 'h1', date: '2023-11-15', type: 'Annual Checkup', doctor: 'Dr. Sarah Smith', notes: 'All clear. Inhaler prescription renewed.', status: 'Cleared' },
+    { id: 'h2', date: '2023-05-22', type: 'Clinic Visit', doctor: 'Nurse Joy', notes: 'Treated for mild fever. Given paracetamol.', status: 'Sent Home' },
+    { id: 'h3', date: '2022-10-10', type: 'Annual Checkup', doctor: 'Dr. Sarah Smith', notes: 'Asthma noted. Baseline set.', status: 'Cleared' }
+  ]);
 
   if (!record) return <div className="medical-loading">Loading Health Profile...</div>;
 
@@ -118,7 +117,7 @@ const MyMedicalRecords = () => {
           </div>
           
           <div className="history-timeline">
-            {history.map((event, index) => (
+            {history.map((event) => (
               <div key={event.id} className="timeline-item">
                 <div className="timeline-marker"></div>
                 <div className="timeline-content">

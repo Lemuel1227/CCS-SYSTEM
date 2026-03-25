@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
+import Login from './pages/auth/Login'
 import MainLayout from './layouts/MainLayout'
-import PlaceholderPage from './pages/PlaceholderPage'
-import AccountManagement from './pages/AccountManagement'
-import EventManagement from './pages/EventManagement'
-import MedicalRecordsManagement from './pages/MedicalRecordsManagement'
-import MyMedicalRecords from './pages/MyMedicalRecords'
-import Events from './pages/Events'
-import AcademicTracker from './pages/AcademicTracker'
-import CourseManagement from './pages/CourseManagement'
-import StudentManagement from './pages/StudentManagement'
+import PlaceholderPage from './pages/shared/PlaceholderPage'
+import AccountManagement from './pages/management/AccountManagement'
+import EventManagement from './pages/management/EventManagement'
+import MedicalRecordsManagement from './pages/management/MedicalRecordsManagement'
+import MyMedicalRecords from './pages/student/MyMedicalRecords'
+import Events from './pages/student/Events'
+import AcademicTracker from './pages/student/AcademicTracker'
+import CourseManagement from './pages/management/CourseManagement'
+import StudentManagement from './pages/management/StudentManagement'
 import './App.css'
 
 function App() {
@@ -80,3 +80,4 @@ function App() {
 }
 
 export default App;
+

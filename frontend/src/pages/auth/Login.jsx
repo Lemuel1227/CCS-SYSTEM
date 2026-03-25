@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
-import logo from '../assets/ccs-logo.png';
-import bgImage from '../assets/bg.jpg';
+import logo from '../../assets/ccs-logo.png';
+import bgImage from '../../assets/bg.jpg';
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({ userId: '', password: '' });

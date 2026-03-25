@@ -26,6 +26,7 @@ import logo from '../assets/ccs-logo.png';
 const ROLE_MENUS = {
   Student: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'My Affiliations', path: '/affiliations', icon: Users },
     { title: 'Events', path: '/events', icon: Calendar },
     { title: 'Academic Tracker', path: '/academic-tracker', icon: BookOpen },
     { title: 'My Achievements', path: '/achievements', icon: Award },
@@ -45,6 +46,7 @@ const ROLE_MENUS = {
   ],
   Admin: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'Faculty Management', path: '/faculty-management', icon: User },
     { title: 'Course Management', path: '/course-management', icon: BookOpen },
     { title: 'Student Management', path: '/student-management', icon: Users },
     { title: 'Event Management', path: '/event-management', icon: Calendar },

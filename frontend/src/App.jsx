@@ -53,6 +53,7 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/academic-tracker" element={<AcademicTracker />} />
             <Route path="/achievements" element={<PlaceholderPage title="My Achievements" />} />
+            <Route path="/affiliations" element={<PlaceholderPage title="My Affiliations" />} />
             <Route path="/violations" element={<PlaceholderPage title="My Violations" />} />
             <Route path="/medical-records" element={<MyMedicalRecords />} />
             <Route path="/profile" element={<PlaceholderPage title="My Profile" />} />
@@ -66,6 +67,7 @@ function App() {
             <Route path="/academic-records-management" element={<PlaceholderPage title="Academic Records Management" />} />
             
             {/* Admin Only Route */}
+            <Route path="/faculty-management" element={<PlaceholderPage title="Faculty Management" />} />
             <Route path="/account-management" element={<AccountManagement />} />
           </Route>
         )}

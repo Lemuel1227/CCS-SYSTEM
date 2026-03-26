@@ -12,6 +12,8 @@ import Events from './pages/student/Events'
 import AcademicTracker from './pages/student/AcademicTracker'
 import CourseManagement from './pages/management/CourseManagement'
 import StudentManagement from './pages/management/StudentManagement'
+import FacultyManagement from './pages/management/FacultyManagement'
+import ViolationManagement from './pages/management/ViolationManagement'
 import './App.css'
 
 function App() {
@@ -61,14 +63,13 @@ function App() {
             
             {/* Faculty & Admin Routes */}
             <Route path="/course-management" element={<CourseManagement />} />
-            <Route path="/student-management" element={<StudentManagement />} />
-            <Route path="/event-management" element={<EventManagement />} />
-            <Route path="/violation-management" element={<PlaceholderPage title="Violation Management" />} />
+            <Route path="/student-management" element={<StudentManagement />} />            <Route path="/event-management" element={<EventManagement />} />
+            <Route path="/violation-management" element={<ViolationManagement />} />
             <Route path="/medical-records-management" element={<MedicalRecordsManagement />} />
             <Route path="/academic-records-management" element={<PlaceholderPage title="Academic Records Management" />} />
             
             {/* Admin Only Route */}
-            <Route path="/faculty-management" element={<PlaceholderPage title="Faculty Management" />} />
+            <Route path="/faculty-management" element={<FacultyManagement />} />
             <Route path="/account-management" element={<AccountManagement />} />
           </Route>
         )}

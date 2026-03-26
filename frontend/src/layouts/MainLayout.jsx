@@ -18,7 +18,8 @@ import {
   X,
   Sun,
   Moon,
-  Award
+  Award,
+  Clock
 } from 'lucide-react';
 import './MainLayout.css';
 import logo from '../assets/ccs-logo.png';
@@ -26,6 +27,7 @@ import logo from '../assets/ccs-logo.png';
 const ROLE_MENUS = {
   Student: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'My Schedule', path: '/my-schedule', icon: Clock },
     { title: 'My Affiliations', path: '/affiliations', icon: Users },
     { title: 'Events', path: '/events', icon: Calendar },
     { title: 'Academic Tracker', path: '/academic-tracker', icon: BookOpen },
@@ -36,6 +38,8 @@ const ROLE_MENUS = {
   ],
   Faculty: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'Schedule Management', path: '/schedule-management', icon: Clock },
+    { title: 'My Schedule', path: '/my-schedule', icon: Clock },
     { title: 'Course Management', path: '/course-management', icon: BookOpen },
     { title: 'Student Management', path: '/student-management', icon: Users },
     { title: 'Event Management', path: '/event-management', icon: Calendar },
@@ -47,6 +51,7 @@ const ROLE_MENUS = {
   Admin: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { title: 'Faculty Management', path: '/faculty-management', icon: User },
+    { title: 'Schedule Management', path: '/schedule-management', icon: Clock },
     { title: 'Course Management', path: '/course-management', icon: BookOpen },
     { title: 'Student Management', path: '/student-management', icon: Users },
     { title: 'Event Management', path: '/event-management', icon: Calendar },

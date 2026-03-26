@@ -738,3 +738,71 @@
 
 .form-group.full { width: 100%; }
 
+
+/* Skill Dropdown Styles */
+.sm-dropdown-container {
+  position: relative;
+}
+
+.sm-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 16px;
+  height: 40px;
+  cursor: pointer;
+  color: #475569;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.sm-dropdown-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.sm-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max-content;
+  min-width: 200px;
+  max-width: 300px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 100;
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sm-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #334155;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.sm-dropdown-item:hover {
+  background-color: var(--background-light, #f8fafc);
+}
+
+.sm-dropdown-empty {
+  padding: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+  text-align: center;
+}
+

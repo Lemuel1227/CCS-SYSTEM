@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/auth/Login'
 import MainLayout from './layouts/MainLayout'
 import PlaceholderPage from './pages/shared/PlaceholderPage'
+import MyProfile from './pages/student/MyProfile'
 import AccountManagement from './pages/management/AccountManagement'
 import EventManagement from './pages/management/EventManagement'
 import MedicalRecordsManagement from './pages/management/MedicalRecordsManagement'
@@ -56,7 +57,7 @@ function App() {
             <Route path="/affiliations" element={<PlaceholderPage title="My Affiliations" />} />
             <Route path="/violations" element={<PlaceholderPage title="My Violations" />} />
             <Route path="/medical-records" element={<MyMedicalRecords />} />
-            <Route path="/profile" element={<PlaceholderPage title="My Profile" />} />
+            <Route path="/profile" element={<MyProfile />} />
             
             {/* Faculty & Admin Routes */}
             <Route path="/course-management" element={<CourseManagement />} />
@@ -80,4 +81,5 @@ function App() {
 }
 
 export default App;
+
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Edit2, Trash2, X, Filter, Users, Eye, LayoutGrid, List, BookOpen, Calendar as CalendarIcon, Mail, Phone } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, X, Filter, Users, Eye, LayoutGrid, List, BookOpen, Calendar as CalendarIcon, Mail, Phone, Code } from 'lucide-react';
 import './StudentManagement.css';
 
 const DEFAULT_FORM_DATA = {
@@ -9,7 +9,7 @@ const DEFAULT_FORM_DATA = {
   lastName: '',
   gender: 'Male',
   yearLevel: '1st Year',
-  program: 'BSCS',
+  program: "BSIT",
   academicTrack: '',
   section: '',
   academicStatus: 'Regular',
@@ -30,91 +30,103 @@ const DEFAULT_FORM_DATA = {
 const INITIAL_STUDENTS = [
   {
     id: '1',
-    studentNo: '2024-0001',
-    firstName: 'Alyssa',
-    middleName: 'Mae',
-    lastName: 'Ramos',
-    gender: 'Female',
-    yearLevel: '1st Year',
-    program: 'BSCS',
-    academicTrack: 'Core Curriculum',
-    section: 'CS1A',
+    studentNo: '2023-0001',
+    firstName: 'Carl Lawrence',
+    middleName: '',
+    lastName: 'Antioquia',
+    gender: 'Male',
+    yearLevel: "4th Year",
+    program: "BSIT",
+    academicTrack: 'Software Engineering',
+    section: "IT-A",
     academicStatus: 'Regular',
-    height: '162',
-    weight: '54',
-    email: 'alyssa.ramos@pnc.edu.ph',
-    contactNumber: '09171234567',
-    emergencyName: 'Rina Ramos',
-    emergencyNumber: '09181234567',
+    height: '170',
+    weight: '65',
+    email: 'carl.antioquia@pnc.edu.ph',
+    contactNumber: '09171112222',
+    emergencyName: 'Maria Antioquia',
+    emergencyNumber: '09181112222',
     emergencyRelation: 'Mother',
     yearGraduated: '',
-    profileImage: ''
+    profileImage: '',
+    achievements: 'Dean\'s Lister (2023)',
+    skills: 'Java, Python, C++',
+    interests: 'Software Development'
   },
   {
     id: '2',
-    studentNo: '2023-0158',
-    firstName: 'Mark',
-    middleName: 'Lopez',
-    lastName: 'Dela Cruz',
+    studentNo: '2023-0002',
+    firstName: 'Lemuel John',
+    middleName: 'O.',
+    lastName: 'Ellasus',
     gender: 'Male',
-    yearLevel: '2nd Year',
-    program: 'BSIT',
-    academicTrack: 'Networking',
-    section: 'IT2B',
+    yearLevel: "4th Year",
+    program: "BSIT",
+    academicTrack: 'Data Science',
+    section: "IT-A",
     academicStatus: 'Regular',
-    height: '170',
-    weight: '68',
-    email: 'mark.delacruz@pnc.edu.ph',
-    contactNumber: '09172345678',
-    emergencyName: 'Mario Dela Cruz',
-    emergencyNumber: '09182345678',
-    emergencyRelation: 'Father',
+    height: '168',
+    weight: '62',
+    email: 'lemuel.ellasus@pnc.edu.ph',
+    contactNumber: '09172223333',
+    emergencyName: 'Susan Ellasus',
+    emergencyNumber: '09182223333',
+    emergencyRelation: 'Mother',
     yearGraduated: '',
-    profileImage: ''
+    profileImage: '',
+    achievements: '',
+    skills: 'Python, R, Machine Learning',
+    interests: 'Data Analytics, AI'
   },
   {
     id: '3',
-    studentNo: '2022-0420',
-    firstName: 'Janelle',
-    middleName: 'T.',
-    lastName: 'Santos',
+    studentNo: '2023-0003',
+    firstName: 'Ma. Cecile',
+    middleName: 'D.',
+    lastName: 'Parungan',
     gender: 'Female',
-    yearLevel: '3rd Year',
-    program: 'BSCS',
-    academicTrack: '',
-    section: 'CS3A',
-    academicStatus: 'Irregular',
-    height: '158',
-    weight: '',
-    email: 'janelle.santos@pnc.edu.ph',
-    contactNumber: '09173456789',
-    emergencyName: 'Nestor Santos',
-    emergencyNumber: '09183456789',
-    emergencyRelation: 'Guardian',
+    yearLevel: "4th Year",
+    program: "BSIT",
+    academicTrack: 'Information Systems',
+    section: "IT-A",
+    academicStatus: 'Regular',
+    height: '160',
+    weight: '55',
+    email: 'macecile.parungan@pnc.edu.ph',
+    contactNumber: '09173334444',
+    emergencyName: 'Robert Parungan',
+    emergencyNumber: '09183334444',
+    emergencyRelation: 'Father',
     yearGraduated: '',
-    profileImage: ''
+    profileImage: '',
+    achievements: '',
+    skills: 'SQL, Python, Web Development',
+    interests: 'Database Management'
   },
   {
     id: '4',
-    studentNo: '2021-0092',
-    firstName: 'Rafael',
-    middleName: 'P.',
-    lastName: 'Navarro',
+    studentNo: '2023-0004',
+    firstName: 'Harvy',
+    middleName: 'A.',
+    lastName: 'Penaflor',
     gender: 'Male',
-    yearLevel: '4th Year',
-    program: 'BSIT',
-    academicTrack: 'Software Engineering',
-    section: 'IT4A',
+    yearLevel: "4th Year",
+    program: "BSIT",
+    academicTrack: 'Web Development',
+    section: "IT-A",
     academicStatus: 'Regular',
     height: '175',
-    weight: '72',
-    email: 'rafael.navarro@pnc.edu.ph',
-    contactNumber: '09174567890',
-    emergencyName: 'Rosa Navarro',
-    emergencyNumber: '09184567890',
+    weight: '70',
+    email: 'harvy.penaflor@pnc.edu.ph',
+    contactNumber: '09174445555',
+    emergencyName: 'Elena Penaflor',
+    emergencyNumber: '09184445555',
     emergencyRelation: 'Mother',
     yearGraduated: '',
-    profileImage: ''
+    profileImage: '',
+    achievements: 'Hackathon Winner',
+    skills: 'JavaScript, React, Node.js',
+    interests: 'Full-stack Development, UI/UX'
   }
 ];
 
@@ -150,23 +162,25 @@ const normalizeStudent = (student) => {
 const StudentManagement = () => {
   const [students, setStudents] = useState(() => {
     try {
-      const stored = localStorage.getItem('ccs_students');
+      const stored = localStorage.getItem('ccs_students_v3');
       if (stored) {
         const parsed = JSON.parse(stored);
         const normalized = parsed.map(normalizeStudent);
-        localStorage.setItem('ccs_students', JSON.stringify(normalized));
+        localStorage.setItem('ccs_students_v3', JSON.stringify(normalized));
         return normalized;
       }
-      localStorage.setItem('ccs_students', JSON.stringify(INITIAL_STUDENTS));
+      localStorage.setItem('ccs_students_v3', JSON.stringify(INITIAL_STUDENTS));
       return INITIAL_STUDENTS;
     } catch {
-      localStorage.setItem('ccs_students', JSON.stringify(INITIAL_STUDENTS));
+      localStorage.setItem('ccs_students_v3', JSON.stringify(INITIAL_STUDENTS));
       return INITIAL_STUDENTS;
     }
   });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -175,9 +189,28 @@ const StudentManagement = () => {
 
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
 
+  const availableSkills = useMemo(() => {
+    const skillsSet = new Set();
+    students.forEach(s => {
+      if (s.skills) {
+        s.skills.split(',').forEach(skill => {
+          const trimmed = skill.trim();
+          if (trimmed) skillsSet.add(trimmed);
+        });
+      }
+    });
+    return Array.from(skillsSet).sort();
+  }, [students]);
+
+  const toggleSkill = (skill) => {
+    setSelectedSkills(prev => 
+      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+    );
+  };
+
   const saveToStorage = (updatedStudents) => {
     setStudents(updatedStudents);
-    localStorage.setItem('ccs_students', JSON.stringify(updatedStudents));
+    localStorage.setItem('ccs_students_v3', JSON.stringify(updatedStudents));
   };
 
   const handleInputChange = (e) => {
@@ -242,9 +275,14 @@ const StudentManagement = () => {
         (student.program || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus = statusFilter === 'All' || student.academicStatus === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      const studentSkillsList = student.skills ? student.skills.split(',').map(s => s.trim().toLowerCase()) : [];
+      const matchesSkill = selectedSkills.length === 0 || 
+        selectedSkills.some(skill => studentSkillsList.includes(skill.toLowerCase()));
+
+      return matchesSearch && matchesStatus && matchesSkill;
     });
-  }, [students, searchQuery, statusFilter]);
+  }, [students, searchQuery, statusFilter, selectedSkills]);
 
   return (
     <div className="student-management-container">
@@ -277,6 +315,39 @@ const StudentManagement = () => {
             <option value="Regular">Regular</option>
             <option value="Irregular">Irregular</option>
           </select>
+        </div>
+
+        <div className="sm-dropdown-container">
+          <button 
+            className="sm-dropdown-btn" 
+            onClick={() => setIsSkillDropdownOpen(!isSkillDropdownOpen)}
+          >
+            <Code size={18} className="sm-filter-icon" />
+            <span>
+              {selectedSkills.length === 0 
+                ? 'Filter by Skills' 
+                : `Skills (${selectedSkills.length})`}
+            </span>
+          </button>
+          
+          {isSkillDropdownOpen && (
+            <div className="sm-dropdown-menu">
+              {availableSkills.length > 0 ? (
+                availableSkills.map(skill => (
+                  <label key={skill} className="sm-dropdown-item">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedSkills.includes(skill)}
+                      onChange={() => toggleSkill(skill)}
+                    />
+                    {skill}
+                  </label>
+                ))
+              ) : (
+                <div className="sm-dropdown-empty">No skills available</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="sm-view-toggle">

@@ -173,7 +173,10 @@ const FacultyManagement = () => {
     <div className="faculty-management-container">
       <div className="page-header">
         <div>
-          <h2>Faculty Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Users size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Faculty Management</h2>
+          </div>
           <p>Manage faculty profiles, department assignments, and academic roles.</p>
         </div>
         <button className="add-btn" onClick={() => openModal()}>

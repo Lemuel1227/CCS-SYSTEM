@@ -240,7 +240,10 @@ const MyMedicalRecords = () => {
       <div className="sm-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div className="sm-header-text">
-            <h2>My Medical Records</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <HeartPulse size={32} color="var(--primary-color)" />
+              <h2 style={{ margin: 0 }}>My Medical Records</h2>
+            </div>
             <p>View your health summary, clinic visits, and update requirements.</p>
           </div>
           <button className="upload-btn" onClick={handleOpenModal} style={{ padding: '10px 20px', fontSize: '15px' }}>

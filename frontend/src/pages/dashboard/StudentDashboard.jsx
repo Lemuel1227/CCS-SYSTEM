@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Calendar, Clock, Award, Activity, FileText, ChevronRight, CheckCircle } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Award, Activity, FileText, ChevronRight, CheckCircle, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
@@ -7,7 +7,10 @@ const StudentDashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>Student Dashboard</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <LayoutDashboard size={32} color="var(--primary-color)" />
+          <h1 style={{ margin: 0 }}>Student Dashboard</h1>
+        </div>
         <p>Welcome back! Keep track of your academic journey.</p>
       </div>
 

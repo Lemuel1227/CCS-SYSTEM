@@ -125,7 +125,10 @@ const ScheduleManagement = () => {
     <div className="schedule-management-container">
       <div className="schedule-header">
         <div className="schedule-header-text">
-          <h1>Schedule Management</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Clock size={28} color="var(--primary-color)" />
+            <h1 style={{ margin: 0 }}>Schedule Management</h1>
+          </div>
           <p>Organize classes, sections, and venues efficiently</p>
         </div>
         <button className="btn-primary" onClick={() => setIsModalOpen(true)}>

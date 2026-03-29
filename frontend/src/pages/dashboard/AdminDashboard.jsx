@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Calendar, BookOpen, Activity, UserPlus, Settings, Clock, AlertTriangle } from 'lucide-react';
+import { Users, Calendar, BookOpen, Activity, UserPlus, Settings, Clock, AlertTriangle, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
@@ -7,7 +7,10 @@ const AdminDashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>Administrator Dashboard</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <LayoutDashboard size={32} color="var(--primary-color)" />
+          <h1 style={{ margin: 0 }}>Administrator Dashboard</h1>
+        </div>
         <p>Welcome back! Here's an overview of the CCS System.</p>
       </div>
 

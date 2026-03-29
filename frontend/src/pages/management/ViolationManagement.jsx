@@ -135,7 +135,10 @@ const ViolationManagement = () => {
   return (
     <div className="violation-management-container">
       <div className="violation-header">
-        <h1>Violation Management</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <AlertTriangle size={32} color="var(--primary-color)" />
+          <h1 style={{ margin: 0 }}>Violation Management</h1>
+        </div>
         <button className="btn-add" onClick={() => handleOpenModal()}>
           <Plus size={18} /> Add Violation
         </button>

@@ -213,7 +213,10 @@ const AchievementManagement = () => {
     <div className="achievement-management-container">
       <div className="page-header">
         <div>
-          <h2>Achievement Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Award size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Achievement Management</h2>
+          </div>
           <p>Manage and track student achievements and recognitions.</p>
         </div>
         <div className="header-actions">

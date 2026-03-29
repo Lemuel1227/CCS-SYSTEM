@@ -139,7 +139,10 @@ const MedicalRecordsManagement = () => {
     <div className="medical-management-container">
       <div className="medical-header-section">
         <div className="medical-header-text">
-          <h2>Medical Records Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Activity size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Medical Records Management</h2>
+          </div>
           <p>Manage student health histories, clearances, and medical requirements securely.</p>
         </div>
         <button className="add-btn" onClick={() => openModal()}>

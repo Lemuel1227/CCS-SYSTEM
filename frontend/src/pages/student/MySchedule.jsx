@@ -71,7 +71,10 @@ const MySchedule = () => {
     <div className="my-schedule-container">
       <div className="schedule-page-header">
         <div>
-          <h1>My Schedule</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <CalendarIcon size={32} color="var(--primary-color)" />
+            <h1 style={{ margin: 0 }}>My Schedule</h1>
+          </div>
           <p>View your classes, venues, and instructors for the current semester.</p>
         </div>
         <div className="header-right">

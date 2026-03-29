@@ -60,7 +60,10 @@ const MyAffiliation = () => {
   return (
     <div className="my-affiliation-container">
       <div className="affiliation-header">
-        <h1>My Affiliations</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Users size={32} color="var(--primary-color)" />
+          <h1 style={{ margin: 0 }}>My Affiliations</h1>
+        </div>
         <p>Manage your organization memberships and discover new communities.</p>
       </div>
 

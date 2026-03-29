@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
   Filter,
   X,
   CheckCircle2,
@@ -12,7 +12,8 @@ import {
   User,
   Users,
   ShieldAlert,
-  GraduationCap
+  GraduationCap,
+  Settings
 } from 'lucide-react';
 import './AccountManagement.css';
 
@@ -143,7 +144,10 @@ const AccountManagement = () => {
 
       <div className="page-header">
         <div>
-          <h1 className="page-title">Account Management</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+            <Settings size={32} color="var(--primary-color)" />
+            <h1 className="page-title" style={{ margin: 0 }}>Account Management</h1>
+          </div>
           <p className="page-subtitle">Manage system users, roles, and access.</p>
         </div>
         <button className="primary-btn" onClick={handleOpenCreate}>

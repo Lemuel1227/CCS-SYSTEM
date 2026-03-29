@@ -288,7 +288,10 @@ const StudentManagement = () => {
     <div className="student-management-container">
       <div className="page-header">
         <div>
-          <h2>Student Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Users size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Student Management</h2>
+          </div>
           <p>Manage student profiles, section assignments, and enrollment status.</p>
         </div>
         <button className="add-btn" onClick={() => openModal()}>

@@ -120,6 +120,10 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
 
   return (
     <div className="profile-container">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <UserCircle size={32} color="var(--primary-color)" />
+        <h1 style={{ margin: 0 }}>My Profile</h1>
+      </div>
       <div className="profile-header-banner">
         <div className="profile-banner-content">
           <div className="profile-avatar-wrapper">
@@ -275,15 +279,14 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
 
       {isEditing && (
         <div className="profile-modal-overlay">
-          <div className="profile-modal">
+          <form className="profile-modal" onSubmit={handleSave}>
             <div className="profile-modal-header">
               <h2>Edit Profile</h2>
-              <button className="profile-close-btn" onClick={handleCloseEdit}>
+              <button type="button" className="profile-close-btn" onClick={handleCloseEdit}>
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSave}>
-              <div className="profile-modal-content">
+            <div className="profile-modal-content">
                 <div className="form-group">
                   <label>First Name</label>
                   <input type="text" name="firstName" value={formData.firstName || ''} onChange={handleInputChange} required />
@@ -337,8 +340,7 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
                 <button type="button" className="btn-cancel" onClick={handleCloseEdit}>Cancel</button>
                 <button type="submit" className="btn-save">Save Changes</button>
               </div>
-            </form>
-          </div>
+          </form>
         </div>
       )}
     </div>

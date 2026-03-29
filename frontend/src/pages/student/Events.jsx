@@ -146,7 +146,10 @@ const Events = () => {
     <div className="events-view-container">
       <div className="events-header-section">
         <div className="events-header-text">
-          <h2>Campus Events</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <CalendarDays size={32} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Campus Events</h2>
+          </div>
           <p>Discover, track, and join upcoming events hosted by the College of Computing Studies.</p>
         </div>
         <div className="events-stats-container">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import './AcademicTracker.css';
 
 const MOCK_GRADES = {
@@ -115,7 +116,10 @@ const AcademicTracker = () => {
 
   return (
     <div className="academic-tracker-container">
-      <h2 className="page-title">Academic Progress Tracker</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <BookOpen size={32} color="var(--primary-color)" />
+        <h2 className="page-title" style={{ margin: 0, paddingBottom: 0, borderBottom: 'none' }}>Academic Progress Tracker</h2>
+      </div>
 
       {/* Retention History Section */}
       <div className="at-card mb-40">

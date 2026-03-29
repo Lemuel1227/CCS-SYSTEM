@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, X, BookOpen } from 'lucide-react';
 import './CourseManagement.css';
 
 const DEFAULT_COURSES = [
@@ -105,7 +105,10 @@ const CourseManagement = () => {
     <div className="course-management-container">
       <div className="page-header">
         <div>
-          <h2>Course Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <BookOpen size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Course Management</h2>
+          </div>
           <p>Manage academic courses, prerequisites, and curriculum scheduling.</p>
         </div>
         <button className="add-btn" onClick={() => openModal()}>

@@ -90,7 +90,10 @@ export default function MyAchievements() {
       {/* Header Section */}
       <div className="page-header">
         <div>
-          <h1>My Achievements</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Award size={32} color="var(--primary-color)" />
+            <h1 style={{ margin: 0 }}>My Achievements</h1>
+          </div>
           <p>
             A showcase of your academic milestones, awards, and extracurricular successes.
           </p>

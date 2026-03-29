@@ -178,7 +178,10 @@ const EventManagement = () => {
     <div className="event-management-container">
       <div className="admin-header-section">
         <div className="admin-header-text">
-          <h2>Event Management</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Calendar size={28} color="var(--primary-color)" />
+            <h2 style={{ margin: 0 }}>Event Management</h2>
+          </div>
           <p>Create, track, and manage all events for the campus easily.</p>
         </div>
         <div className="admin-header-actions">

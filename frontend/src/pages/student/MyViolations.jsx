@@ -80,7 +80,10 @@ const MyViolations = () => {
     <div className="my-violations-container">
       <div className="page-header">
         <div>
-          <h1>My Violations</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <ShieldAlert size={32} color="var(--primary-color)" />
+            <h1 style={{ margin: 0 }}>My Violations</h1>
+          </div>
           <p>Track your disciplinary records, active penalties, and resolution history.</p>
         </div>
       </div>

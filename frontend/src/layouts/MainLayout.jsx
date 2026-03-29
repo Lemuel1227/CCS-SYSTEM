@@ -20,7 +20,9 @@ import {
   Moon,
   Award,
   Clock,
-  Bell
+  Bell,
+  Megaphone,
+  Flag
 } from 'lucide-react';
 import './MainLayout.css';
 import logo from '../assets/ccs-logo.png';
@@ -44,6 +46,9 @@ const ROLE_MENUS = {
     { title: 'Course Management', path: '/course-management', icon: BookOpen },
     { title: 'Student Management', path: '/student-management', icon: Users },
     { title: 'Event Management', path: '/event-management', icon: Calendar },
+    { title: 'Announcement Management', path: '/announcement-management', icon: Megaphone },
+    { title: 'Clubs & Orgs Management', path: '/clubs-orgs-management', icon: Flag },
+    { title: 'Achievement Management', path: '/achievement-management', icon: Award },
     { title: 'My Profile', path: '/profile', icon: UserCircle },
     { title: 'Violation Management', path: '/violation-management', icon: ShieldAlert },
     { title: 'Medical Records Management', path: '/medical-records-management', icon: HeartPulse },
@@ -55,6 +60,9 @@ const ROLE_MENUS = {
     { title: 'Course Management', path: '/course-management', icon: BookOpen },
     { title: 'Student Management', path: '/student-management', icon: Users },
     { title: 'Event Management', path: '/event-management', icon: Calendar },
+    { title: 'Announcement Management', path: '/announcement-management', icon: Megaphone },
+    { title: 'Clubs & Orgs Mgmt', path: '/clubs-orgs-management', icon: Flag },
+    { title: 'Achievement Management', path: '/achievement-management', icon: Award },
     { title: 'Violation Management', path: '/violation-management', icon: ShieldAlert },
     { title: 'Medical Records Management', path: '/medical-records-management', icon: HeartPulse },
     { title: 'Account Management', path: '/account-management', icon: Settings },

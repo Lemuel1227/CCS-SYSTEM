@@ -54,35 +54,37 @@ const AdminDashboard = () => {
         <div className="dashboard-card">
           <h2><Activity size={20} /> Recent Activities</h2>
           <div className="list-container">
-            <div className="list-item">
-              <div className="item-icon">
-                <UserPlus size={20} />
+            <div className="timeline-item">
+              <div className="timeline-dot">
+                <UserPlus size={16} />
               </div>
-              <div className="item-content">
+              <div className="timeline-content">
                 <h4>New Student Account Created</h4>
                 <p>BSCS 1st Year - John Doe was added to the system.</p>
+                <div className="timeline-time">2 hours ago</div>
               </div>
-              <div className="item-meta">2 hours ago</div>
+              <div className="timeline-line"></div>
             </div>
-            <div className="list-item">
-              <div className="item-icon">
-                <Calendar size={20} />
+            <div className="timeline-item">
+              <div className="timeline-dot">
+                <Calendar size={16} />
               </div>
-              <div className="item-content">
+              <div className="timeline-content">
                 <h4>Event Scheduled</h4>
                 <p>IT Week 2026 has been scheduled for next month.</p>
+                <div className="timeline-time">5 hours ago</div>
               </div>
-              <div className="item-meta">5 hours ago</div>
+              <div className="timeline-line"></div>
             </div>
-            <div className="list-item">
-              <div className="item-icon">
-                <AlertTriangle size={20} />
+            <div className="timeline-item">
+              <div className="timeline-dot">
+                <AlertTriangle size={16} />
               </div>
-              <div className="item-content">
+              <div className="timeline-content">
                 <h4>Violation Recorded</h4>
                 <p>New dress code violation added by Faculty M. Smith.</p>
+                <div className="timeline-time">1 day ago</div>
               </div>
-              <div className="item-meta">1 day ago</div>
             </div>
           </div>
         </div>
@@ -90,7 +92,7 @@ const AdminDashboard = () => {
         <div className="dashboard-card">
           <h2><Settings size={20} /> Quick Actions</h2>
           <div className="list-container">
-            <Link to="/management/students" className="list-item">
+            <Link to="/student-management" className="list-item">
               <div className="item-icon">
                 <Users size={20} />
               </div>
@@ -99,7 +101,7 @@ const AdminDashboard = () => {
                 <p>View, edit, or add records</p>
               </div>
             </Link>
-            <Link to="/management/courses" className="list-item">
+            <Link to="/course-management" className="list-item">
               <div className="item-icon">
                 <BookOpen size={20} />
               </div>
@@ -108,7 +110,7 @@ const AdminDashboard = () => {
                 <p>Update curriculums and subjects</p>
               </div>
             </Link>
-            <Link to="/management/schedules" className="list-item">
+            <Link to="/schedule-management" className="list-item">
               <div className="item-icon">
                 <Clock size={20} />
               </div>

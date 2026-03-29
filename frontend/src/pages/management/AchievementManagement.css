@@ -1,0 +1,447 @@
+﻿.achievement-management-container {
+  padding: 24px;
+  background-color: var(--bg-main, #f8fafc);
+  min-height: calc(100vh - 60px);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.achievement-management-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.achievement-management-container .page-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-dark, #1e293b);
+  margin: 0 0 4px 0;
+}
+
+.achievement-management-container .page-header p {
+  color: var(--text-muted, #64748b);
+  font-size: 14px;
+  margin: 0;
+}
+
+.achievement-management-container .header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.achievement-management-container .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--bg-surface);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.achievement-management-container .export-btn:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-focus);
+}
+
+.achievement-management-container .add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.achievement-management-container .add-btn:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* Stats */
+.achievement-management-container .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.achievement-management-container .stat-card {
+  background-color: var(--bg-surface, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.achievement-management-container .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  background-color: var(--bg-subtle);
+}
+
+.achievement-management-container .stat-content p {
+  color: var(--text-muted, #64748b);
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.achievement-management-container .stat-content h3 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-dark, #0f172a);
+}
+
+.achievement-management-container .controls-section {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.achievement-management-container .search-container {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+}
+
+.achievement-management-container .search-container svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+}
+
+.achievement-management-container .search-container input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-dark);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.achievement-management-container .search-container input:focus {
+  border-color: var(--primary-color);
+}
+
+.achievement-management-container .filter-select {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-dark);
+  font-size: 14px;
+  outline: none;
+  min-width: 160px;
+  cursor: pointer;
+}
+
+.achievement-management-container .filter-select:focus {
+  border-color: var(--primary-color);
+}
+
+/* Table Styles */
+.achievement-management-container .table-container {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.achievement-management-container table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.achievement-management-container th {
+  background-color: var(--bg-subtle, #f1f5f9);
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-medium, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.achievement-management-container th:hover {
+  background-color: var(--border-color);
+}
+
+.achievement-management-container th div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.achievement-management-container td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-dark, #1e293b);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.achievement-management-container tr:last-child td {
+  border-bottom: none;
+}
+
+.achievement-management-container tr:hover td {
+  background-color: var(--bg-subtle);
+}
+
+.achievement-management-container .category-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.achievement-management-container .category-badge.academic {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+
+.achievement-management-container .category-badge.extracurricular {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+}
+
+.achievement-management-container .category-badge.leadership {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.achievement-management-container .action-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-light);
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.achievement-management-container .action-btn.edit:hover {
+  color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.achievement-management-container .action-btn.delete:hover {
+  color: var(--error-text);
+  background-color: var(--error-bg);
+}
+
+/* Pagination container */
+.achievement-management-container .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+}
+
+.achievement-management-container .pagination-info {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.achievement-management-container .pagination-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.achievement-management-container .page-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-dark);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.achievement-management-container .page-btn:hover:not(:disabled) {
+  background-color: var(--bg-subtle);
+  border-color: var(--text-light);
+}
+
+.achievement-management-container .page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.achievement-management-container .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.achievement-management-container .modal-content {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.achievement-management-container .modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.achievement-management-container .modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-dark);
+}
+
+.achievement-management-container .close-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  transition: color 0.2s;
+}
+
+.achievement-management-container .close-btn:hover {
+  color: var(--error-text);
+}
+
+.achievement-management-container .modal-body {
+  padding: 24px;
+}
+
+.achievement-management-container .form-group {
+  margin-bottom: 20px;
+}
+
+.achievement-management-container .form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-medium);
+  margin-bottom: 8px;
+}
+
+.achievement-management-container .form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-dark);
+  background-color: var(--bg-main);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.achievement-management-container .form-control:focus {
+  border-color: var(--primary-color);
+}
+
+.achievement-management-container textarea.form-control {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.achievement-management-container .modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.achievement-management-container .cancel-btn,
+.achievement-management-container .save-btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.achievement-management-container .cancel-btn {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-medium);
+}
+
+.achievement-management-container .cancel-btn:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-dark);
+}
+
+.achievement-management-container .save-btn {
+  background-color: var(--primary-color);
+  border: none;
+  color: white;
+}
+
+.achievement-management-container .save-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

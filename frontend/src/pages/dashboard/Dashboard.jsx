@@ -4,7 +4,7 @@ import FacultyDashboard from './FacultyDashboard';
 import StudentDashboard from './StudentDashboard';
 
 const Dashboard = () => {
-  const userRole = localStorage.getItem('userRole') || 'student';
+  const userRole = (localStorage.getItem('userRole') || 'Student').toLowerCase();
 
   if (userRole === 'admin') {
     return <AdminDashboard />;

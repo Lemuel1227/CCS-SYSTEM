@@ -85,7 +85,7 @@ const FacultyDashboard = () => {
         <div className="dashboard-card">
           <h2><FileText size={20} /> Quick Actions</h2>
           <div className="list-container">
-            <Link to="/management/students" className="list-item">
+            <Link to="/student-management" className="list-item">
               <div className="item-icon">
                 <UserCheck size={20} />
               </div>
@@ -94,7 +94,7 @@ const FacultyDashboard = () => {
                 <p>View student records and grades</p>
               </div>
             </Link>
-            <Link to="/management/violations" className="list-item">
+            <Link to="/violation-management" className="list-item">
               <div className="item-icon">
                 <AlertCircle size={20} />
               </div>
@@ -103,7 +103,7 @@ const FacultyDashboard = () => {
                 <p>Log a student disciplinary issue</p>
               </div>
             </Link>
-            <Link to="/management/schedules" className="list-item">
+            <Link to="/schedule-management" className="list-item">
               <div className="item-icon">
                 <CalendarCheck size={20} />
               </div>

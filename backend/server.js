@@ -19,8 +19,12 @@ app.get("/", (req, res) => {
 
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const facultyRoutes = require("./routes/facultyRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/faculty", facultyRoutes);
+app.use("/api/students", studentRoutes);
 
 const PORT = process.env.PORT || 5000;
 

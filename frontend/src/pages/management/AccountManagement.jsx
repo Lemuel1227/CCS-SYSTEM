@@ -42,6 +42,20 @@ const AccountManagement = () => {
     }, 3000);
   };
 
+  const toTitleStatus = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'inactive') return 'Inactive';
+    if (s === 'suspended') return 'Suspended';
+    return 'Active';
+  };
+
+  const toApiStatus = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'inactive') return 'inactive';
+    if (s === 'suspended') return 'suspended';
+    return 'active';
+  };
+
   const fetchUsers = async () => {
     try {
       const response = await axios.get('/api/users');
@@ -52,7 +66,7 @@ const AccountManagement = () => {
         fullName: u.name,
         email: u.email,
         role: u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Student',
-        status: 'Active', // Hardcoded since we don't have status in backend yet
+        status: toTitleStatus(u.accountStatus),
         requiresPasswordChange: u.requiresPasswordChange
       }));
       setAccounts(mappedUsers);
@@ -163,7 +177,8 @@ const AccountManagement = () => {
         const payload = {
           name: formData.fullName,
           email: formData.email,
-          role: formData.role.toLowerCase()
+          role: formData.role.toLowerCase(),
+          accountStatus: toApiStatus(formData.status)
         };
         // Don't send empty passwords on edit
         if (formData.password) payload.password = formData.password;
@@ -173,7 +188,8 @@ const AccountManagement = () => {
         const updatedData = {
           ...formData, 
           id: currentAccount.id,
-          role: response.data.role.charAt(0).toUpperCase() + response.data.role.slice(1)
+          role: response.data.role.charAt(0).toUpperCase() + response.data.role.slice(1),
+          status: toTitleStatus(response.data.accountStatus || formData.status)
         };
         
         setAccounts(accounts.map(acc => acc.id === currentAccount.id ? updatedData : acc));
@@ -191,7 +207,8 @@ const AccountManagement = () => {
           name: formData.fullName,
           email: formData.email,
           password: formData.password,
-          role: formData.role.toLowerCase()
+          role: formData.role.toLowerCase(),
+          accountStatus: toApiStatus(formData.status)
         };
 
         const response = await axios.post('/api/auth/register', payload);
@@ -202,7 +219,7 @@ const AccountManagement = () => {
           fullName: response.data.name,
           email: response.data.email,
           role: response.data.role.charAt(0).toUpperCase() + response.data.role.slice(1),
-          status: 'Active',
+          status: toTitleStatus(response.data.accountStatus || formData.status),
           requiresPasswordChange: response.data.requiresPasswordChange
         };
         setAccounts([...accounts, newAccount]);
@@ -461,6 +478,7 @@ const AccountManagement = () => {
                   <select name="status" value={formData.status} onChange={handleFormChange}>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
+                    <option value="Suspended">Suspended</option>
                   </select>
                 </div>
               </div>

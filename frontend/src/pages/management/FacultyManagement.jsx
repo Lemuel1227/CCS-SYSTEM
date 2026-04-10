@@ -1,14 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, X, Filter, Users, Eye, LayoutGrid, List, BookOpen, Briefcase, Mail, Phone, Award } from 'lucide-react';
+import axios from 'axios';
 import './FacultyManagement.css';
 
 const DEFAULT_FORM_DATA = {
+  userId: '',
   employeeId: '',
+  employeeIdNumber: '',
   firstName: '',
+  middleName: '',
   lastName: '',
+  gender: 'Male',
   email: '',
   contactNumber: '',
   department: 'IT',
+  position: '',
   academicRank: 'Instructor',
   employmentType: 'Full-time',
   status: 'Active',
@@ -19,12 +25,17 @@ const DEFAULT_FORM_DATA = {
 const INITIAL_FACULTY = [
   {
     id: '1',
+    userId: '',
     employeeId: 'EMP-2020-001',
+    employeeIdNumber: 'EMP-2020-001',
     firstName: 'Juan',
+    middleName: '',
     lastName: 'Dela Cruz',
+    gender: 'Male',
     email: 'juan.delacruz@pnc.edu.ph',
     contactNumber: '09171234567',
     department: 'IT',
+    position: 'Instructor',
     academicRank: 'Assistant Professor',
     employmentType: 'Full-time',
     status: 'Active',
@@ -33,12 +44,17 @@ const INITIAL_FACULTY = [
   },
   {
     id: '2',
+    userId: '',
     employeeId: 'EMP-2021-015',
+    employeeIdNumber: 'EMP-2021-015',
     firstName: 'Maria',
+    middleName: '',
     lastName: 'Santos',
+    gender: 'Female',
     email: 'maria.santos@pnc.edu.ph',
     contactNumber: '09189876543',
     department: 'CS',
+    position: 'Instructor',
     academicRank: 'Instructor',
     employmentType: 'Part-time',
     status: 'Active',
@@ -47,12 +63,17 @@ const INITIAL_FACULTY = [
   },
   {
     id: '3',
+    userId: '',
     employeeId: 'EMP-2018-042',
+    employeeIdNumber: 'EMP-2018-042',
     firstName: 'Roberto',
+    middleName: '',
     lastName: 'Reyes',
+    gender: 'Male',
     email: 'roberto.reyes@pnc.edu.ph',
     contactNumber: '09191112222',
     department: 'IS',
+    position: 'Associate Professor',
     academicRank: 'Associate Professor',
     employmentType: 'Full-time',
     status: 'On Leave',
@@ -62,18 +83,9 @@ const INITIAL_FACULTY = [
 ];
 
 const FacultyManagement = () => {
-  const [faculties, setFaculties] = useState(() => {
-    try {
-      const stored = localStorage.getItem('ccs_faculty_v1');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      localStorage.setItem('ccs_faculty_v1', JSON.stringify(INITIAL_FACULTY));
-      return INITIAL_FACULTY;
-    } catch {
-      return INITIAL_FACULTY;
-    }
-  });
+  const [faculties, setFaculties] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All');
@@ -88,14 +100,56 @@ const FacultyManagement = () => {
 
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
 
-  const saveToStorage = (updatedFaculties) => {
-    setFaculties(updatedFaculties);
-    localStorage.setItem('ccs_faculty_v1', JSON.stringify(updatedFaculties));
+  const mapFaculty = (f) => {
+    const user = f.user || {};
+    return {
+      id: f._id || f.id,
+      userId: user.userId || f.userId || '',
+      employeeId: f.employeeIdNumber || f.employeeId || '',
+      employeeIdNumber: f.employeeIdNumber || f.employeeId || '',
+      firstName: f.firstName || '',
+      middleName: f.middleName || '',
+      lastName: f.lastName || '',
+      gender: f.gender || 'Male',
+      email: user.email || f.email || '',
+      contactNumber: f.contactNumber || '',
+      department: f.department || 'IT',
+      position: f.position || '',
+      academicRank: f.academicRank || 'Instructor',
+      employmentType: f.employmentType || 'Full-time',
+      status: f.status || 'Active',
+      specializations: f.specializations || '',
+      profileImage: f.profileImage || ''
+    };
   };
+
+  const fetchFaculty = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const response = await axios.get('/api/faculty');
+      const mapped = response.data.map(mapFaculty);
+      setFaculties(mapped);
+    } catch (err) {
+      console.error('Failed to fetch faculty:', err);
+      setErrorMessage('Failed to load faculty from the server.');
+      setFaculties(INITIAL_FACULTY);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFaculty();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'employeeId' ? { employeeIdNumber: value } : {})
+    }));
   };
 
   const openModal = (faculty = null) => {
@@ -127,21 +181,59 @@ const FacultyManagement = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingFaculty) {
-      const updated = faculties.map((faculty) =>
-        faculty.id === editingFaculty.id ? { ...formData, id: faculty.id } : faculty
-      );
-      saveToStorage(updated);
+      axios.put(`/api/faculty/${editingFaculty.id}`, {
+        userId: formData.userId,
+        employeeIdNumber: formData.employeeIdNumber || formData.employeeId,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        department: formData.department,
+        position: formData.position,
+        contactNumber: formData.contactNumber,
+        email: formData.email
+      }).then((response) => {
+        const updated = mapFaculty(response.data);
+        const merged = { ...formData, ...updated, id: editingFaculty.id };
+        setFaculties(faculties.map((f) => f.id === editingFaculty.id ? merged : f));
+        closeModal();
+      }).catch((err) => {
+        console.error('Failed to update faculty:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to update faculty.');
+      });
     } else {
-      const newFaculty = { ...formData, id: Date.now().toString() };
-      saveToStorage([...faculties, newFaculty]);
+      axios.post('/api/faculty', {
+        userId: formData.userId,
+        employeeIdNumber: formData.employeeIdNumber || formData.employeeId,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        department: formData.department,
+        position: formData.position,
+        contactNumber: formData.contactNumber,
+        email: formData.email
+      }).then((response) => {
+        const created = mapFaculty(response.data);
+        const merged = { ...formData, ...created };
+        setFaculties([...faculties, merged]);
+        closeModal();
+      }).catch((err) => {
+        console.error('Failed to create faculty:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to create faculty.');
+      });
     }
-    closeModal();
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this faculty member?')) {
-      const updated = faculties.filter((faculty) => faculty.id !== id);
-      saveToStorage(updated);
+      axios.delete(`/api/faculty/${id}`).then(() => {
+        const updated = faculties.filter((faculty) => faculty.id !== id);
+        setFaculties(updated);
+      }).catch((err) => {
+        console.error('Failed to delete faculty:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to delete faculty.');
+      });
     }
   };
 
@@ -171,6 +263,11 @@ const FacultyManagement = () => {
 
   return (
     <div className="faculty-management-container">
+      {errorMessage && (
+        <div className="fm-empty-state" style={{ marginBottom: '16px', color: '#b91c1c' }}>
+          {errorMessage}
+        </div>
+      )}
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -265,7 +362,7 @@ const FacultyManagement = () => {
                   <tr key={faculty.id}>
                     <td>
                       <div className="fm-table-cell-content">
-                        <div className="fw-medium">{faculty.employeeId}</div>
+                        <div className="fw-medium">{faculty.employeeIdNumber || faculty.employeeId}</div>
                       </div>
                     </td>
                     <td>
@@ -344,7 +441,7 @@ const FacultyManagement = () => {
                       <h3 className="fm-card-name" title={`${faculty.lastName}, ${faculty.firstName}`}>
                         {`${faculty.lastName}, ${faculty.firstName}`}
                       </h3>
-                      <p className="fm-card-faculty-no">{faculty.employeeId}</p>
+                      <p className="fm-card-faculty-no">{faculty.employeeIdNumber || faculty.employeeId}</p>
                     </div>
                   </div>
                   <div className="fm-card-body">
@@ -412,6 +509,16 @@ const FacultyManagement = () => {
               <h4 className="form-section-title">Basic Information</h4>
               <div className="form-row">
                 <div className="form-group half">
+                  <label>User ID (from Users)</label>
+                  <input
+                    type="text"
+                    name="userId"
+                    value={formData.userId}
+                    onChange={handleInputChange}
+                    placeholder="Optional link to user"
+                  />
+                </div>
+                <div className="form-group half">
                   <label>Employee ID</label>
                   <input
                     type="text"
@@ -445,6 +552,19 @@ const FacultyManagement = () => {
                   />
                 </div>
                 <div className="form-group half">
+                  <label>Middle Name</label>
+                  <input
+                    type="text"
+                    name="middleName"
+                    value={formData.middleName}
+                    onChange={handleInputChange}
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group half">
                   <label>Last Name</label>
                   <input
                     type="text"
@@ -455,10 +575,28 @@ const FacultyManagement = () => {
                     placeholder="Enter last name"
                   />
                 </div>
+                <div className="form-group half">
+                  <label>Gender</label>
+                  <select name="gender" value={formData.gender} onChange={handleInputChange}>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
 
               <h4 className="form-section-title">Professional Information</h4>
               <div className="form-row">
+                <div className="form-group half">
+                  <label>Position / Designation</label>
+                  <input
+                    type="text"
+                    name="position"
+                    value={formData.position}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Instructor"
+                  />
+                </div>
                 <div className="form-group half">
                   <label>Academic Rank</label>
                   <select name="academicRank" value={formData.academicRank} onChange={handleInputChange}>
@@ -568,8 +706,10 @@ const FacultyManagement = () => {
               <div className="fm-detail-section">
                 <h4>Basic Information</h4>
                 <div className="fm-detail-grid">
-                  <div className="fm-detail-item"><span>Full Name</span><strong>{`${selectedFaculty.lastName}, ${selectedFaculty.firstName}`}</strong></div>
-                  <div className="fm-detail-item"><span>Employee ID</span><strong>{selectedFaculty.employeeId || 'N/A'}</strong></div>
+                  <div className="fm-detail-item"><span>Full Name</span><strong>{`${selectedFaculty.lastName}, ${selectedFaculty.firstName}${selectedFaculty.middleName ? ` ${selectedFaculty.middleName}` : ''}`}</strong></div>
+                  <div className="fm-detail-item"><span>Employee ID</span><strong>{selectedFaculty.employeeIdNumber || selectedFaculty.employeeId || 'N/A'}</strong></div>
+                  <div className="fm-detail-item"><span>User ID</span><strong>{selectedFaculty.userId || 'N/A'}</strong></div>
+                  <div className="fm-detail-item"><span>Gender</span><strong>{selectedFaculty.gender || 'N/A'}</strong></div>
                   <div className="fm-detail-item"><span>Email</span><strong>{selectedFaculty.email || 'N/A'}</strong></div>
                   <div className="fm-detail-item"><span>Contact Number</span><strong>{selectedFaculty.contactNumber || 'N/A'}</strong></div>
                 </div>
@@ -579,6 +719,7 @@ const FacultyManagement = () => {
                 <h4>Professional Information</h4>
                 <div className="fm-detail-grid">
                   <div className="fm-detail-item"><span>Department</span><strong>{selectedFaculty.department || 'N/A'}</strong></div>
+                  <div className="fm-detail-item"><span>Position</span><strong>{selectedFaculty.position || 'N/A'}</strong></div>
                   <div className="fm-detail-item"><span>Academic Rank</span><strong>{selectedFaculty.academicRank || 'N/A'}</strong></div>
                   <div className="fm-detail-item"><span>Employment Type</span><strong>{selectedFaculty.employmentType || 'N/A'}</strong></div>
                   <div className="fm-detail-item"><span>Status</span>

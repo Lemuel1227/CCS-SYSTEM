@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserCircle, BookOpen, Phone, HeartPulse, Award, Shield, Edit, Camera, X } from 'lucide-react';
+import axios from 'axios';
 import './MyProfile.css';
 
 const MyProfile = ({ studentData = null, readOnly = false }) => {
-  const userRole = localStorage.getItem('userRole') || 'Student';
+  const rawRole = localStorage.getItem('userRole') || 'student';
+  const userRole = rawRole.charAt(0).toUpperCase() + rawRole.slice(1);
 
   const defaultProfiles = {
     Student: {
@@ -90,6 +92,8 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
 
   const student = studentData || localStudent;
   const setStudent = studentData ? () => {} : setLocalStudent;
+  const [loadError, setLoadError] = useState('');
+  const [profileId, setProfileId] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
@@ -110,16 +114,161 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setStudent(formData);
-    localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(formData));
-    setIsEditing(false);
+    if (studentData) {
+      setStudent(formData);
+      localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(formData));
+      setIsEditing(false);
+      return;
+    }
+
+    if (userRole === 'Student') {
+      axios.put('/api/students/me', {
+        studentNumber: formData.studentNumber || formData.studentNo,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        yearLevel: formData.yearLevel,
+        program: formData.program,
+        academicStatus: (formData.academicStatus || '').toLowerCase(),
+        height: formData.height,
+        weight: formData.weight,
+        contactNumber: formData.contactNumber,
+        emergencyContactName: formData.emergencyName,
+        emergencyContactNumber: formData.emergencyNumber,
+        emergencyContactRelation: formData.emergencyRelation,
+        yearGraduated: formData.yearGraduated,
+        email: formData.email
+      }).then((response) => {
+        const s = response.data;
+        const mapped = {
+          ...formData,
+          studentNumber: s.studentNumber,
+          studentNo: s.studentNumber,
+          email: s.user?.email || formData.email
+        };
+        setStudent(mapped);
+        localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(mapped));
+        setIsEditing(false);
+      }).catch((err) => {
+        console.error('Failed to save student profile:', err);
+        setLoadError(err.response?.data?.message || 'Failed to save profile.');
+      });
+      return;
+    }
+
+    if (userRole === 'Faculty') {
+      axios.put('/api/faculty/me', {
+        employeeIdNumber: formData.studentNumber || formData.studentNo,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        department: formData.program,
+        position: formData.academicTrack,
+        contactNumber: formData.contactNumber,
+        email: formData.email
+      }).then((response) => {
+        const f = response.data;
+        const mapped = {
+          ...formData,
+          studentNumber: f.employeeIdNumber || formData.studentNumber,
+          studentNo: f.employeeIdNumber || formData.studentNo,
+          email: f.user?.email || formData.email
+        };
+        setStudent(mapped);
+        localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(mapped));
+        setIsEditing(false);
+      }).catch((err) => {
+        console.error('Failed to save faculty profile:', err);
+        setLoadError(err.response?.data?.message || 'Failed to save profile.');
+      });
+    }
   };
+
+  useEffect(() => {
+    if (studentData) return;
+    if (userRole === 'Student') {
+      axios.get('/api/students/me').then((response) => {
+        const s = response.data;
+        const mapped = {
+          ...initialStudent,
+          studentNumber: s.studentNumber,
+          studentNo: s.studentNumber,
+          firstName: s.firstName || '',
+          middleName: s.middleName || '',
+          lastName: s.lastName || '',
+          gender: s.gender || 'N/A',
+          yearLevel: s.yearLevel || 'N/A',
+          program: s.program || 'N/A',
+          academicTrack: s.academicTrack || '',
+          section: s.section || '',
+          academicStatus: s.academicStatus ? s.academicStatus.charAt(0).toUpperCase() + s.academicStatus.slice(1) : 'Regular',
+          height: s.height || '',
+          weight: s.weight || '',
+          email: s.user?.email || '',
+          contactNumber: s.contactNumber || '',
+          emergencyName: s.emergencyContactName || '',
+          emergencyNumber: s.emergencyContactNumber || '',
+          emergencyRelation: s.emergencyContactRelation || '',
+          yearGraduated: s.yearGraduated || '',
+          profileImage: s.profileImage || ''
+        };
+        setProfileId(s._id);
+        setLocalStudent(mapped);
+        localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(mapped));
+      }).catch((err) => {
+        console.error('Failed to load student profile:', err);
+        setLoadError('Failed to load profile from server.');
+      });
+    }
+
+    if (userRole === 'Faculty') {
+      axios.get('/api/faculty/me').then((response) => {
+        const f = response.data;
+        const mapped = {
+          ...initialStudent,
+          studentNumber: f.employeeIdNumber || '',
+          studentNo: f.employeeIdNumber || '',
+          firstName: f.firstName || '',
+          middleName: f.middleName || '',
+          lastName: f.lastName || '',
+          gender: f.gender || 'N/A',
+          yearLevel: 'N/A',
+          program: f.department || 'Faculty',
+          academicTrack: f.position || '',
+          section: 'N/A',
+          academicStatus: 'Active',
+          height: '',
+          weight: '',
+          email: f.user?.email || '',
+          contactNumber: f.contactNumber || '',
+          emergencyName: '',
+          emergencyNumber: '',
+          emergencyRelation: '',
+          profileImage: f.profileImage || ''
+        };
+        setProfileId(f._id);
+        setLocalStudent(mapped);
+        localStorage.setItem(`ccs_my_profile_${userRole}`, JSON.stringify(mapped));
+      }).catch((err) => {
+        console.error('Failed to load faculty profile:', err);
+        setLoadError('Failed to load profile from server.');
+      });
+    }
+  }, [studentData, userRole]);
 
   const fullName = student.firstName + ' ' + (student.middleName ? student.middleName + ' ' : '') + student.lastName;
   const initials = (student.firstName?.charAt(0) || '') + (student.lastName?.charAt(0) || '');
+  const studentNumber = student.studentNumber || student.studentNo;
 
   return (
     <div className="profile-container">
+      {loadError && (
+        <div style={{ marginBottom: '16px', color: '#b91c1c' }}>
+          {loadError}
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <UserCircle size={32} color="var(--primary-color)" />
         <h1 style={{ margin: 0 }}>My Profile</h1>
@@ -142,7 +291,7 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
           </div>
           <div className="profile-header-details">
             <h2>{fullName}</h2>
-            <p className="profile-student-no">{student.studentNo}</p>
+            <p className="profile-student-no">{studentNumber}</p>
             <div className="profile-badges">
               <span className="profile-badge program-badge">{student.program || "Student"}</span>
               <span className="profile-badge status-badge">{student.academicStatus || "Active"}</span>
@@ -174,7 +323,7 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
             </div>
             <div className="profile-info-item">
               <span className="info-label">Student No.</span>
-              <span className="info-value">{student.studentNo}</span>
+              <span className="info-value">{studentNumber}</span>
             </div>
           </div>
         </div>
@@ -348,4 +497,3 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
 };
 
 export default MyProfile;
-

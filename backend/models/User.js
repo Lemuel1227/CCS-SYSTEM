@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "faculty", "student"],
       default: "student",
     },
+    accountStatus: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+    },
     passwordChangedAt: Date,
     requiresPasswordChange: {
       type: Boolean,

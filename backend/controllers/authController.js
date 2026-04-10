@@ -33,7 +33,7 @@ const authUser = async (req, res) => {
 // @route   POST /api/auth/register
 // @access  Private/Admin
 const registerUser = async (req, res) => {
-  const { userId, name, email, password, role } = req.body;
+  const { userId, name, email, password, role, accountStatus } = req.body;
 
   try {
     const userExists = await User.findOne({ 
@@ -50,6 +50,7 @@ const registerUser = async (req, res) => {
       email,
       password,
       role: role || "student",
+      accountStatus: accountStatus || "active",
     });
 
     if (user) {

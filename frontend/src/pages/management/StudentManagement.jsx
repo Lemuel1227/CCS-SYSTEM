@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, X, Filter, Users, Eye, LayoutGrid, List, BookOpen, Calendar as CalendarIcon, Mail, Phone, Code } from 'lucide-react';
+import axios from 'axios';
 import './StudentManagement.css';
 import MyProfile from '../student/MyProfile';
 
 const DEFAULT_FORM_DATA = {
+  userId: '',
+  studentNumber: '',
   firstName: '',
   middleName: '',
   lastName: '',
@@ -30,6 +33,8 @@ const DEFAULT_FORM_DATA = {
 const INITIAL_STUDENTS = [
   {
     id: '1',
+    userId: '',
+    studentNumber: '2023-0001',
     studentNo: '2023-0001',
     firstName: 'Carl Lawrence',
     middleName: '',
@@ -55,6 +60,8 @@ const INITIAL_STUDENTS = [
   },
   {
     id: '2',
+    userId: '',
+    studentNumber: '2023-0002',
     studentNo: '2023-0002',
     firstName: 'Lemuel John',
     middleName: 'O.',
@@ -80,6 +87,8 @@ const INITIAL_STUDENTS = [
   },
   {
     id: '3',
+    userId: '',
+    studentNumber: '2023-0003',
     studentNo: '2023-0003',
     firstName: 'Ma. Cecile',
     middleName: 'D.',
@@ -105,6 +114,8 @@ const INITIAL_STUDENTS = [
   },
   {
     id: '4',
+    userId: '',
+    studentNumber: '2023-0004',
     studentNo: '2023-0004',
     firstName: 'Harvy',
     middleName: 'A.',
@@ -147,7 +158,8 @@ const normalizeStudent = (student) => {
   return {
     ...DEFAULT_FORM_DATA,
     id: student.id || Date.now().toString(),
-    studentNo: student.studentNo || '',
+    studentNo: student.studentNo || student.studentNumber || '',
+    studentNumber: student.studentNumber || student.studentNo || '',
     firstName,
     middleName,
     lastName,
@@ -160,22 +172,9 @@ const normalizeStudent = (student) => {
 };
 
 const StudentManagement = () => {
-  const [students, setStudents] = useState(() => {
-    try {
-      const stored = localStorage.getItem('ccs_students_v3');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const normalized = parsed.map(normalizeStudent);
-        localStorage.setItem('ccs_students_v3', JSON.stringify(normalized));
-        return normalized;
-      }
-      localStorage.setItem('ccs_students_v3', JSON.stringify(INITIAL_STUDENTS));
-      return INITIAL_STUDENTS;
-    } catch {
-      localStorage.setItem('ccs_students_v3', JSON.stringify(INITIAL_STUDENTS));
-      return INITIAL_STUDENTS;
-    }
-  });
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -208,14 +207,69 @@ const StudentManagement = () => {
     );
   };
 
-  const saveToStorage = (updatedStudents) => {
-    setStudents(updatedStudents);
-    localStorage.setItem('ccs_students_v3', JSON.stringify(updatedStudents));
+  const toTitleStatus = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'irregular') return 'Irregular';
+    return 'Regular';
   };
+
+  const mapStudent = (s) => {
+    const user = s.user || {};
+    return normalizeStudent({
+      ...s,
+      id: s._id || s.id,
+      userId: user.userId || s.userId || '',
+      studentNumber: s.studentNumber,
+      studentNo: s.studentNumber || s.studentNo,
+      firstName: s.firstName,
+      middleName: s.middleName,
+      lastName: s.lastName,
+      gender: s.gender,
+      yearLevel: s.yearLevel,
+      program: s.program,
+      academicStatus: toTitleStatus(s.academicStatus),
+      height: s.height,
+      weight: s.weight,
+      email: user.email || s.email || '',
+      contactNumber: s.contactNumber,
+      emergencyName: s.emergencyContactName,
+      emergencyNumber: s.emergencyContactNumber,
+      emergencyRelation: s.emergencyContactRelation,
+      yearGraduated: s.yearGraduated,
+      profileImage: s.profileImage,
+      achievements: s.achievements,
+      skills: s.skills,
+      interests: s.interests
+    });
+  };
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const response = await axios.get('/api/students');
+      const mapped = response.data.map(mapStudent);
+      setStudents(mapped);
+    } catch (err) {
+      console.error('Failed to fetch students:', err);
+      setErrorMessage('Failed to load students from the server.');
+      setStudents(INITIAL_STUDENTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'studentNo' ? { studentNumber: value } : {})
+    }));
   };
 
   const openModal = (student = null) => {
@@ -247,21 +301,73 @@ const StudentManagement = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingStudent) {
-      const updated = students.map((student) =>
-        student.id === editingStudent.id ? { ...formData, id: student.id } : student
-      );
-      saveToStorage(updated);
+      axios.put(`/api/students/${editingStudent.id}`, {
+        userId: formData.userId,
+        studentNumber: formData.studentNumber || formData.studentNo,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        yearLevel: formData.yearLevel,
+        program: formData.program,
+        academicStatus: formData.academicStatus.toLowerCase(),
+        height: formData.height,
+        weight: formData.weight,
+        contactNumber: formData.contactNumber,
+        emergencyContactName: formData.emergencyName,
+        emergencyContactNumber: formData.emergencyNumber,
+        emergencyContactRelation: formData.emergencyRelation,
+        yearGraduated: formData.yearGraduated,
+        email: formData.email
+      }).then((response) => {
+        const updated = mapStudent(response.data);
+        const merged = { ...formData, ...updated, id: editingStudent.id };
+        setStudents(students.map((s) => s.id === editingStudent.id ? merged : s));
+        closeModal();
+      }).catch((err) => {
+        console.error('Failed to update student:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to update student.');
+      });
     } else {
-      const newStudent = { ...formData, id: Date.now().toString() };
-      saveToStorage([...students, newStudent]);
+      axios.post('/api/students', {
+        userId: formData.userId,
+        studentNumber: formData.studentNumber || formData.studentNo,
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        yearLevel: formData.yearLevel,
+        program: formData.program,
+        academicStatus: formData.academicStatus.toLowerCase(),
+        height: formData.height,
+        weight: formData.weight,
+        contactNumber: formData.contactNumber,
+        emergencyContactName: formData.emergencyName,
+        emergencyContactNumber: formData.emergencyNumber,
+        emergencyContactRelation: formData.emergencyRelation,
+        yearGraduated: formData.yearGraduated,
+        email: formData.email
+      }).then((response) => {
+        const created = mapStudent(response.data);
+        const merged = { ...formData, ...created };
+        setStudents([...students, merged]);
+        closeModal();
+      }).catch((err) => {
+        console.error('Failed to create student:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to create student.');
+      });
     }
-    closeModal();
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
-      const updated = students.filter((student) => student.id !== id);
-      saveToStorage(updated);
+      axios.delete(`/api/students/${id}`).then(() => {
+        const updated = students.filter((student) => student.id !== id);
+        setStudents(updated);
+      }).catch((err) => {
+        console.error('Failed to delete student:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to delete student.');
+      });
     }
   };
 
@@ -286,6 +392,11 @@ const StudentManagement = () => {
 
   return (
     <div className="student-management-container">
+      {errorMessage && (
+        <div className="sm-empty-state" style={{ marginBottom: '16px', color: '#b91c1c' }}>
+          {errorMessage}
+        </div>
+      )}
       <div className="page-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -392,7 +503,7 @@ const StudentManagement = () => {
                   <tr key={student.id}>
                     <td>
                       <div className="sm-table-cell-content">
-                        <div className="fw-medium">{student.studentNo}</div>
+                        <div className="fw-medium">{student.studentNumber || student.studentNo}</div>
                       </div>
                     </td>
                     <td>
@@ -473,7 +584,7 @@ const StudentManagement = () => {
                     </div>
                     <div className="sm-card-user-text">
                       <h3 className="sm-card-name">{`${student.lastName}, ${student.firstName}`}</h3>
-                      <p className="sm-card-student-no">{student.studentNo}</p>
+                      <p className="sm-card-student-no">{student.studentNumber || student.studentNo}</p>
                     </div>
                   </div>
                   <div className="sm-card-body">
@@ -541,6 +652,16 @@ const StudentManagement = () => {
               <h4 className="form-section-title">Basic Information</h4>
               <div className="form-row">
                 <div className="form-group half">
+                  <label>User ID (from Users)</label>
+                  <input
+                    type="text"
+                    name="userId"
+                    value={formData.userId}
+                    onChange={handleInputChange}
+                    placeholder="Optional link to user"
+                  />
+                </div>
+                <div className="form-group half">
                   <label>Student Number</label>
                   <input
                     type="text"
@@ -550,14 +671,6 @@ const StudentManagement = () => {
                     required
                     placeholder="e.g. 2026-0001"
                   />
-                </div>
-                <div className="form-group half">
-                  <label>Gender</label>
-                  <select name="gender" value={formData.gender} onChange={handleInputChange}>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
                 </div>
               </div>
 
@@ -585,16 +698,26 @@ const StudentManagement = () => {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter last name"
-                />
+              <div className="form-row">
+                <div className="form-group half">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Enter last name"
+                  />
+                </div>
+                <div className="form-group half">
+                  <label>Gender</label>
+                  <select name="gender" value={formData.gender} onChange={handleInputChange}>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
 
               <h4 className="form-section-title">Academic Information</h4>

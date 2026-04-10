@@ -25,6 +25,9 @@ router.put("/:id", async (req, res) => {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
       user.role = req.body.role || user.role;
+      if (req.body.accountStatus) {
+        user.accountStatus = req.body.accountStatus;
+      }
 
       if (req.body.password) {
         if (req.user._id.toString() !== user._id.toString()) {
@@ -39,7 +42,8 @@ router.put("/:id", async (req, res) => {
         _id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
-        role: updatedUser.role
+        role: updatedUser.role,
+        accountStatus: updatedUser.accountStatus
       });
     } else {
       res.status(404).json({ message: "User not found" });

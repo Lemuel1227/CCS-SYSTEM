@@ -12,12 +12,12 @@ ________________________________________
 
 3. Configure Vercel environment variables
 • In Vercel project settings -> Environment Variables, add:
-	MONGO_URI = your full Atlas URI
+	MONGODB_URI = your full Atlas URI
 • Add it for Production (and Preview/Development if needed).
 
 4. Local development setup
 • Copy backend/.env.example to backend/.env
-• Set MONGO_URI in backend/.env (Atlas URI or local URI)
+• Set MONGODB_URI in backend/.env (Atlas URI or local URI)
 
 5. Deploy
 • Redeploy from Vercel dashboard after setting env vars.

@@ -10,7 +10,7 @@ const connectDB = async () => {
   const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
-    throw new Error("MONGO_URI is not set. Please configure it in environment variables.");
+    throw new Error("MONGODB_URI is not set. Please configure it in environment variables.");
   }
 
   try {

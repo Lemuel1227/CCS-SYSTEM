@@ -1,3 +1,28 @@
+MongoDB Atlas + Vercel Setup
+________________________________________
+1. Create a MongoDB Atlas database
+• Create a cluster in Atlas.
+• In Database Access, create a DB user.
+• In Network Access, allow Vercel access (for quick setup you can use 0.0.0.0/0, then restrict later).
+
+2. Get your Atlas connection string
+• Use Drivers -> Node.js and copy the SRV URI.
+• Format example:
+	mongodb+srv://<username>:<password>@<cluster-name>.mongodb.net/ccs-system?retryWrites=true&w=majority&appName=<app-name>
+
+3. Configure Vercel environment variables
+• In Vercel project settings -> Environment Variables, add:
+	MONGO_URI = your full Atlas URI
+• Add it for Production (and Preview/Development if needed).
+
+4. Local development setup
+• Copy backend/.env.example to backend/.env
+• Set MONGO_URI in backend/.env (Atlas URI or local URI)
+
+5. Deploy
+• Redeploy from Vercel dashboard after setting env vars.
+• Confirm backend logs show: MongoDB Connected
+
 ________________________________________
 SYSTEM STRUCTURE(Backend)
 ________________________________________

@@ -115,7 +115,7 @@ const AccountManagement = () => {
   // Handlers
   const handleOpenCreate = () => {
     setCurrentAccount(null);
-    setFormData({ userId: '', firstName: '', middleName: '', lastName: '', email: '', password: '', role: 'Student', status: 'Active' });
+    setFormData({ userId: '', firstName: '', middleName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'Student', status: 'Active' });
     setIsModalOpen(true);
   };
 
@@ -132,7 +132,8 @@ const AccountManagement = () => {
       firstName, 
       middleName, 
       lastName, 
-      password: '' // Don't pre-fill password on edit
+      password: '', // Don't pre-fill password on edit
+      confirmPassword: ''
     });
     setIsModalOpen(true);
   };
@@ -186,6 +187,10 @@ const AccountManagement = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      showToast('Passwords do not match.', 'error');
+      return;
+    }
     const fullName = [formData.firstName, formData.middleName, formData.lastName]
       .filter(Boolean)
       .join(' ')
@@ -493,16 +498,31 @@ const AccountManagement = () => {
               </div>
 
               {(!currentAccount || (currentAccount && currentAccount.id === currentUser._id)) && (
-                <div className="form-group">
-                  <label>{currentAccount ? "Change Password" : "Password"}</label>
-                  <input 
-                    type="password" 
-                    name="password" 
-                    value={formData.password} 
-                    onChange={handleFormChange} 
-                    required={!currentAccount} 
-                    placeholder={currentAccount ? "Leave blank to keep current password" : "Enter initial password"}
-                  />
+                <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
+                  <div className="form-group">
+                    <label>{currentAccount ? "Change Password" : "Password"}</label>
+                    <input 
+                      type="password" 
+                      name="password" 
+                      value={formData.password || ''} 
+                      onChange={handleFormChange} 
+                      required={!currentAccount} 
+                      placeholder={currentAccount ? "Leave blank to keep current password" : "Enter initial password"}
+                    />
+                  </div>
+                  {formData.password && (
+                    <div className="form-group">
+                      <label>Confirm Password</label>
+                      <input 
+                        type="password" 
+                        name="confirmPassword" 
+                        value={formData.confirmPassword || ''} 
+                        onChange={handleFormChange} 
+                        required 
+                        placeholder={currentAccount ? "Confirm new password" : "Confirm initial password"}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

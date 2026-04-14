@@ -6,7 +6,9 @@ import bgImage from '../assets/bg.jpg';
 
 const SessionGuard = ({ onLogout, onPasswordConfirmed }) => {
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -19,6 +21,11 @@ const SessionGuard = ({ onLogout, onPasswordConfirmed }) => {
     e.preventDefault();
     if (!password || password === 'password123') {
       setError('Please choose a password different from the default.');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match. Please try again.');
       return;
     }
 
@@ -125,6 +132,50 @@ const SessionGuard = ({ onLogout, onPasswordConfirmed }) => {
                 }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}       
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#334155', fontSize: '14px' }}>Confirm Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  paddingRight: '40px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  boxSizing: 'border-box',
+                  fontSize: '15px',
+                  color: '#0f172a',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                placeholder="Confirm new password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  padding: 0,
+                  display: 'flex'
+                }}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}       
               </button>
             </div>
           </div>

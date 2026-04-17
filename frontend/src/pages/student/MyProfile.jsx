@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserCircle, BookOpen, Phone, HeartPulse, Award, Shield, Edit, Camera, X } from 'lucide-react';
 import axios from 'axios';
 import './MyProfile.css';
@@ -181,7 +181,9 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
     }
   };
 
-  const initialStudent = defaultProfiles[userRole] || defaultProfiles.Student;
+  const initialStudent = useMemo(() => {
+    return defaultProfiles[userRole] || defaultProfiles.Student;
+  }, [userRole]);
 
   const [localStudent, setLocalStudent] = useState(initialStudent);
 
@@ -281,12 +283,11 @@ const MyProfile = ({ studentData = null, readOnly = false }) => {
     axios.get('/api/profile/me').then((response) => {
       const mapped = normalizeProfileResponse(response.data, userRole);
       setLocalStudent(mapped);
-      setStudent(mapped);
     }).catch((err) => {
       console.error('Failed to load profile:', err);
       setLoadError('Failed to load profile from server.');
     });
-  }, [studentData, userRole, initialStudent]);
+  }, [studentData, userRole]);
 
   const fullName = student.firstName + ' ' + (student.middleName ? student.middleName + ' ' : '') + student.lastName;
   const initials = (student.firstName?.charAt(0) || '') + (student.lastName?.charAt(0) || '');

@@ -6,9 +6,9 @@ const {
   updateViolationType,
   deleteViolationType,
 } = require("../controllers/violationController");
-const { protect, admin } = require("../middlewares/authMiddleware");
+const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
 
-router.use(protect, admin);
+router.use(protect, adminOrFaculty);
 
 router.route("/")
   .get(getViolationTypes)

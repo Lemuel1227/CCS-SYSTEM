@@ -1,126 +1,85 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, MapPin, Users, Search, Filter, CalendarDays, CheckCircle, Info } from 'lucide-react';
+import axios from 'axios';
 import './Events.css';
 
-const mockEvents = [
-  {
-    id: 'evt_1',
-    title: 'CodeFest 2026',
-    description: 'Annual college hackathon. Build amazing projects in 48 hours with fellow students!',
-    date: '2026-04-15',
-    time: '08:00 AM',
-    location: 'CCS Main Lab',
-    status: 'Upcoming',
-    maxParticipants: 100,
-    participants: ['stu_12345', 'stu_1', 'stu_2', 'stu_3']
-  },
-  {
-    id: 'evt_2',
-    title: 'Web Dev Workshop',
-    description: 'Learn modern web development using React and modern CSS frameworks.',
-    date: '2026-03-20',
-    time: '01:00 PM',
-    location: 'Online (Zoom)',
-    status: 'Upcoming',
-    maxParticipants: 50,
-    participants: ['stu_1', 'stu_4']
-  },
-  {
-    id: 'evt_3',
-    title: 'AI in Tech Seminar',
-    description: 'Guest speaker discussing the future of Artificial Intelligence in daily life.',
-    date: '2026-02-28',
-    time: '10:00 AM',
-    location: 'Auditorium A',
-    status: 'Completed',
-    maxParticipants: 200,
-    participants: ['stu_12345', 'stu_10', 'stu_11', 'stu_12']
-  },
-  {
-    id: 'evt_4',
-    title: 'Coding Bootcamp Phase 1',
-    description: 'First phase of the intensive coding bootcamp for freshman beginners.',
-    date: '2026-03-13',
-    time: '09:00 AM',
-    location: 'Room 302',
-    status: 'Ongoing',
-    maxParticipants: 40,
-    participants: Array.from({ length: 38 }, (_, i) => `stu_${i + 100}`)
-  }
-];
+const normalizeEvent = (ev) => ({
+  id: ev._id || ev.id,
+  title: ev.title || '',
+  description: ev.description || '',
+  date: ev.date || '',
+  time: ev.time || '',
+  location: ev.location || '',
+  maxParticipants: ev.maxParticipants || 0,
+  status: ev.status || 'Upcoming',
+  participants: ev.participants || []
+});
 
 const Events = () => {
-  const [events, setEvents] = useState(() => {
-    try {
-      const storedEvents = localStorage.getItem('ccs_events');
-      if (storedEvents) {
-        const parsedEvents = JSON.parse(storedEvents);
-        // Ensure mock events are always injected if missing (for demonstration purposes)
-        const hasMockData = parsedEvents.some(ev => ev.id === 'evt_1');
-        if (!hasMockData) {
-          const mergedEvents = [...mockEvents, ...parsedEvents];
-          localStorage.setItem('ccs_events', JSON.stringify(mergedEvents));
-          return mergedEvents;
-        }
-        return parsedEvents;
-      }
-      localStorage.setItem('ccs_events', JSON.stringify(mockEvents));
-      return mockEvents;
-    } catch {
-      localStorage.setItem('ccs_events', JSON.stringify(mockEvents));
-      return mockEvents;
-    }
-  });
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  // Mock current student ID
-  const currentStudentId = 'stu_12345';
+  const [currentStudentId, setCurrentStudentId] = useState(null);
 
   useEffect(() => {
-    // Listen for storage changes if Admin edits in another tab
-    const handleStorageChange = (e) => {
-      if (e.key === 'ccs_events') {
-        try {
-          setEvents(JSON.parse(e.newValue) || []);
-        } catch {
-          setEvents([]);
-        }
+    const fetchUserData = async () => {
+      try {
+        const res = await axios.get('/api/auth/profile');
+        setCurrentStudentId(res.data._id);
+      } catch (error) {
+        console.error('Failed to get user profile', error);
       }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    fetchUserData();
   }, []);
 
-  const handleApply = (eventId) => {
-    const updatedEvents = events.map(ev => {
-      if (ev.id === eventId) {
-        return {
-          ...ev,
-          participants: [...(ev.participants || []), currentStudentId]
-        };
-      }
-      return ev;
-    });
-
-    localStorage.setItem('ccs_events', JSON.stringify(updatedEvents));
-    setEvents(updatedEvents);
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/events');
+      setEvents(response.data.map(normalizeEvent));
+    } catch (error) {
+      console.error('Failed to load events:', error);
+      setErrorMessage('Failed to load events from the server.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCancelApplication = (eventId) => {
-    const updatedEvents = events.map(ev => {
-      if (ev.id === eventId) {
-        return {
-          ...ev,
-          participants: (ev.participants || []).filter(id => id !== currentStudentId)
-        };
-      }
-      return ev;
-    });
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
-    localStorage.setItem('ccs_events', JSON.stringify(updatedEvents));
-    setEvents(updatedEvents);
+  const handleApply = async (eventId) => {
+    try {
+      const response = await axios.post(`/api/events/${eventId}/apply`);
+      setEvents((prevEvents) =>
+        prevEvents.map((ev) =>
+          ev.id === eventId ? normalizeEvent(response.data) : ev
+        )
+      );
+    } catch (error) {
+      console.error('Failed to apply for event:', error);
+      alert(error.response?.data?.message || 'Failed to apply for event.');
+    }
+  };
+
+  const handleCancelApplication = async (eventId) => {
+    try {
+      const response = await axios.post(`/api/events/${eventId}/cancel`);
+      setEvents((prevEvents) =>
+        prevEvents.map((ev) =>
+          ev.id === eventId ? normalizeEvent(response.data) : ev
+        )
+      );
+    } catch (error) {
+      console.error('Failed to cancel application:', error);
+      alert(error.response?.data?.message || 'Failed to cancel application.');
+    }
   };
 
   const filteredEvents = useMemo(() => {
@@ -199,7 +158,17 @@ const Events = () => {
       </div>
 
       <div className="events-grid">
-        {filteredEvents.length === 0 ? (
+        {errorMessage && (
+           <div className="error-message">
+             <p>{errorMessage}</p>
+           </div>
+        )}
+        {loading ? (
+           <div className="no-events-view">
+             <Info size={48} className="empty-state-icon" />
+             <h3>Loading Events...</h3>
+           </div>
+        ) : filteredEvents.length === 0 ? (
            <div className="no-events-view">
             <Info size={48} className="empty-state-icon" />
             <h3>No Events Found</h3>

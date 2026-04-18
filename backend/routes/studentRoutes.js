@@ -7,10 +7,10 @@ const {
   updateStudent,
   deleteStudent
 } = require("../controllers/studentController");
-const { protect, admin } = require("../middlewares/authMiddleware");
+const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
 
 // All routes below require protect and admin
-router.use(protect, admin);
+router.use(protect, adminOrFaculty);
 
 router.route("/")
   .get(getStudents)

@@ -58,8 +58,24 @@ const admin = async (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     return next();
   } else if (req.user) {
-    return res.status(401).json({ message: "Not authorized as an admin" });
+    return res.status(403).json({ message: "Not authorized as an admin" });
   }
 };
 
-module.exports = { protect, admin };
+const adminOrFaculty = async (req, res, next) => {
+  // Allow if it's the very first user
+  if (!req.user) {
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      return next();
+    }
+  }
+
+  if (req.user && (req.user.role === "admin" || req.user.role === "faculty")) {
+    return next();
+  } else if (req.user) {
+    return res.status(403).json({ message: "Not authorized as an admin or faculty" });
+  }
+};
+
+module.exports = { protect, admin, adminOrFaculty };

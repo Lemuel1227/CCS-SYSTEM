@@ -7,9 +7,9 @@ const {
   updateCourse,
   deleteCourse,
 } = require("../controllers/courseController");
-const { protect, admin } = require("../middlewares/authMiddleware");
+const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
 
-router.use(protect, admin);
+router.use(protect, adminOrFaculty);
 
 router.route("/")
   .get(getCourses)

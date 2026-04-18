@@ -1,79 +1,44 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calendar, Clock, MapPin, Users, Search, Filter, CalendarDays, 
   CheckCircle, Settings, Edit, Trash2, RefreshCw, Plus, X, ListTodo
 } from 'lucide-react';
+import axios from 'axios';
 import './EventManagement.css';
 
-const mockEvents = [
-  {
-    id: 'evt_1',
-    title: 'CodeFest 2026',
-    description: 'Annual college hackathon. Build amazing projects in 48 hours with fellow students!',
-    date: '2026-04-15',
-    time: '08:00',
-    location: 'CCS Main Lab',
-    status: 'Upcoming',
-    maxParticipants: 100,
-    participants: ['stu_12345', 'stu_1', 'stu_2', 'stu_3']
-  },
-  {
-    id: 'evt_2',
-    title: 'Web Dev Workshop',
-    description: 'Learn modern web development using React and modern CSS frameworks.',
-    date: '2026-03-20',
-    time: '13:00',
-    location: 'Online (Zoom)',
-    status: 'Upcoming',
-    maxParticipants: 50,
-    participants: ['stu_1', 'stu_4']
-  },
-  {
-    id: 'evt_3',
-    title: 'AI in Tech Seminar',
-    description: 'Guest speaker discussing the future of Artificial Intelligence in daily life.',
-    date: '2026-02-28',
-    time: '10:00',
-    location: 'Auditorium A',
-    status: 'Completed',
-    maxParticipants: 200,
-    participants: ['stu_12345', 'stu_10', 'stu_11', 'stu_12']
-  },
-  {
-    id: 'evt_4',
-    title: 'Coding Bootcamp Phase 1',
-    description: 'First phase of the intensive coding bootcamp for freshman beginners.',
-    date: '2026-03-13',
-    time: '09:00',
-    location: 'Room 302',
-    status: 'Ongoing',
-    maxParticipants: 40,
-    participants: Array.from({ length: 38 }, (_, i) => `stu_${i + 100}`)
-  }
-];
+const normalizeEvent = (ev) => ({
+  id: ev._id || ev.id,
+  title: ev.title || '',
+  description: ev.description || '',
+  date: ev.date || '',
+  time: ev.time || '',
+  location: ev.location || '',
+  maxParticipants: ev.maxParticipants || '',
+  status: ev.status || 'Upcoming',
+  participants: ev.participants || []
+});
 
 const EventManagement = () => {
-  const [events, setEvents] = useState(() => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const loadEvents = async () => {
     try {
-      const storedEvents = localStorage.getItem('ccs_events');
-      if (storedEvents) {
-        const parsedEvents = JSON.parse(storedEvents);
-        // Ensure mock events are always injected if missing (for demonstration purposes)
-        const hasMockData = parsedEvents.some(ev => ev.id === 'evt_1');
-        if (!hasMockData) {
-          const mergedEvents = [...mockEvents, ...parsedEvents];
-          localStorage.setItem('ccs_events', JSON.stringify(mergedEvents));
-          return mergedEvents;
-        }
-        return parsedEvents;
-      }
-      localStorage.setItem('ccs_events', JSON.stringify(mockEvents));
-      return mockEvents;
-    } catch {
-      localStorage.setItem('ccs_events', JSON.stringify(mockEvents));
-      return mockEvents;
+      setLoading(true);
+      const response = await axios.get('/api/events');
+      setEvents(response.data.map(normalizeEvent));
+    } catch (error) {
+      console.error('Failed to load events:', error);
+      setErrorMessage('Failed to load events from the server.');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -91,8 +56,7 @@ const EventManagement = () => {
 
   // Empty effect removed since state is initialized synchronously
 
-  const saveToStorage = (updatedEvents) => {
-    localStorage.setItem('ccs_events', JSON.stringify(updatedEvents));
+  const saveToServer = (updatedEvents) => {
     setEvents(updatedEvents);
   };
 
@@ -123,36 +87,55 @@ const EventManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    let updatedEvents;
+
+    const payload = {
+      ...formData,
+      maxParticipants: Number(formData.maxParticipants)
+    };
 
     if (formData.id) {
       // Edit
-      updatedEvents = events.map((ev) => (ev.id === formData.id ? { ...formData, participants: ev.participants || [] } : ev));
+      axios.put(`/api/events/${formData.id}`, payload).then((response) => {
+        const updated = events.map((ev) => ev.id === formData.id ? normalizeEvent(response.data) : ev);
+        saveToServer(updated);
+        closeModal();
+      }).catch((error) => {
+        console.error('Failed to update event:', error);
+        setErrorMessage(error.response?.data?.message || 'Failed to update event.');
+      });
     } else {
       // Create
-      const newEvent = {
-        ...formData,
-        id: Date.now().toString(),
-        participants: [] // empty array to hold student IDs or names
-      };
-      updatedEvents = [...events, newEvent];
+      axios.post('/api/events', payload).then((response) => {
+        const newEvent = normalizeEvent(response.data);
+        saveToServer([...events, newEvent]);
+        closeModal();
+      }).catch((error) => {
+        console.error('Failed to create event:', error);
+        setErrorMessage(error.response?.data?.message || 'Failed to create event.');
+      });
     }
-
-    saveToStorage(updatedEvents);
-    closeModal();
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
-      const updatedEvents = events.filter((ev) => ev.id !== id);
-      saveToStorage(updatedEvents);
+      axios.delete(`/api/events/${id}`).then(() => {
+        const updatedEvents = events.filter((ev) => ev.id !== id);
+        saveToServer(updatedEvents);
+      }).catch((error) => {
+        console.error('Failed to delete event:', error);
+        setErrorMessage(error.response?.data?.message || 'Failed to delete event.');
+      });
     }
   };
 
   const toggleStatus = (event) => {
     const newStatus = event.status === 'Upcoming' ? 'Ongoing' : event.status === 'Ongoing' ? 'Completed' : 'Upcoming';
-    const updatedEvents = events.map((ev) => (ev.id === event.id ? { ...ev, status: newStatus } : ev));
-    saveToStorage(updatedEvents);
+    axios.put(`/api/events/${event.id}`, { status: newStatus }).then((response) => {
+      const updatedEvents = events.map((ev) => (ev.id === event.id ? normalizeEvent(response.data) : ev));
+      saveToServer(updatedEvents);
+    }).catch((error) => {
+      console.error('Failed to update event status:', error);
+    });
   };
 
   const filteredEvents = useMemo(() => {
@@ -259,8 +242,18 @@ const EventManagement = () => {
         </div>
       </div>
 
+
       <div className="event-list-wrapper">
-        {filteredEvents.length === 0 ? (
+        {errorMessage && (
+          <div className="error-message">
+            <p>{errorMessage}</p>
+          </div>
+        )}
+        {loading ? (
+          <div className="admin-no-results">
+            <p>Loading events...</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="admin-no-results">
              <ListTodo size={40} className="empty-icon" />
              <p>No events found. Adjust filters or create a new one.</p>

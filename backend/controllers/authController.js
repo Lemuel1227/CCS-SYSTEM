@@ -10,8 +10,10 @@ const authUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ userId });
+    const isMatch = user ? await user.matchPassword(password) : false;
+    console.log("LOGIN ATTEMPT:", { body: req.body, userPass: user ? user.password : null, isMatch });
 
-    if (user && (await user.matchPassword(password))) {
+    if (user && isMatch) {
       res.json({
         _id: user._id,
         userId: user.userId,

@@ -17,32 +17,60 @@ app.get("/", (req, res) => {
 });
 
 const normalizeRouter = (moduleExport, modulePath) => {
+  const visited = new Set();
   let candidate = moduleExport;
 
-  // Handle CJS/ESM interop wrappers that may nest exports.
-  for (let i = 0; i < 4 && candidate && typeof candidate !== "function"; i += 1) {
+  // Unwrap common interop shells.
+  for (let i = 0; i < 6 && candidate && typeof candidate !== "function"; i += 1) {
+    if (visited.has(candidate)) break;
+    visited.add(candidate);
+
     if (typeof candidate.default === "function") {
-      candidate = candidate.default;
-      break;
+      return candidate.default;
     }
     if (candidate.default) {
       candidate = candidate.default;
       continue;
     }
     if (typeof candidate.router === "function") {
+      return candidate.router;
+    }
+    if (candidate.router) {
       candidate = candidate.router;
-      break;
+      continue;
     }
     break;
   }
 
-  if (typeof candidate !== "function") {
-    throw new TypeError(
-      `Route module "${modulePath}" must export an Express router function`
-    );
+  if (typeof candidate === "function") {
+    return candidate;
   }
 
-  return candidate;
+  // Some builds can surface router-like objects (non-callable) with `.handle`.
+  if (candidate && typeof candidate.handle === "function") {
+    return (req, res, next) => candidate.handle(req, res, next);
+  }
+
+  // Last-resort: scan top-level props for a router-like value.
+  if (candidate && typeof candidate === "object") {
+    const values = Object.values(candidate);
+    for (const value of values) {
+      if (typeof value === "function") {
+        return value;
+      }
+      if (value && typeof value.handle === "function") {
+        return (req, res, next) => value.handle(req, res, next);
+      }
+    }
+  }
+
+  const shape =
+    candidate && typeof candidate === "object"
+      ? `keys: ${Object.keys(candidate).join(", ")}`
+      : `type: ${typeof candidate}`;
+  throw new TypeError(
+    `Route module "${modulePath}" must export an Express router function (${shape})`
+  );
 };
 
 const userRoutes = normalizeRouter(require("./routes/userRoutes"), "./routes/userRoutes");

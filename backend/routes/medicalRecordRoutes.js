@@ -35,5 +35,3 @@ router.route("/:id")
 router.get("/:id/documents/:documentId/download", downloadMedicalRecordDocument);
 
 module.exports = router;
-module.exports.default = router;
-module.exports.router = router;

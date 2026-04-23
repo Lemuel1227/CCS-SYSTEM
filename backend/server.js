@@ -16,6 +16,22 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+const describeModuleShape = (value) => {
+  if (value === null) return "type: null";
+  if (value === undefined) return "type: undefined";
+
+  const type = typeof value;
+  if (type !== "object" && type !== "function") {
+    return `type: ${type}`;
+  }
+
+  const keys = Object.keys(value);
+  const ownNames = Object.getOwnPropertyNames(value);
+  const constructorName = value?.constructor?.name || "unknown";
+
+  return `type: ${type}, constructor: ${constructorName}, keys: [${keys.join(", ")}], ownProps: [${ownNames.join(", ")}]`;
+};
+
 const normalizeRouter = (moduleExport, modulePath) => {
   const visited = new Set();
   let candidate = moduleExport;
@@ -64,27 +80,46 @@ const normalizeRouter = (moduleExport, modulePath) => {
     }
   }
 
-  const shape =
-    candidate && typeof candidate === "object"
-      ? `keys: ${Object.keys(candidate).join(", ")}`
-      : `type: ${typeof candidate}`;
+  const shape = describeModuleShape(candidate);
   throw new TypeError(
     `Route module "${modulePath}" must export an Express router function (${shape})`
   );
 };
 
-const userRoutes = normalizeRouter(require("./routes/userRoutes"), "./routes/userRoutes");
-const authRoutes = normalizeRouter(require("./routes/authRoutes"), "./routes/authRoutes");
-const facultyRoutes = normalizeRouter(require("./routes/facultyRoutes"), "./routes/facultyRoutes");
-const studentRoutes = normalizeRouter(require("./routes/studentRoutes"), "./routes/studentRoutes");
-const profileRoutes = normalizeRouter(require("./routes/profileRoutes"), "./routes/profileRoutes");
-const courseRoutes = normalizeRouter(require("./routes/courseRoutes"), "./routes/courseRoutes");
-const medicalRecordRoutes = normalizeRouter(require("./routes/medicalRecordRoutes"), "./routes/medicalRecordRoutes");
-const academicRoutes = normalizeRouter(require("./routes/academicRoutes"), "./routes/academicRoutes");
-const classScheduleRoutes = normalizeRouter(require("./routes/classScheduleRoutes"), "./routes/classScheduleRoutes");
-const violationRoutes = normalizeRouter(require("./routes/violationRoutes"), "./routes/violationRoutes");
-const violationTypeRoutes = normalizeRouter(require("./routes/violationTypeRoutes"), "./routes/violationTypeRoutes");
-const eventRoutes = normalizeRouter(require("./routes/eventRoutes"), "./routes/eventRoutes");
+const loadRouteModule = (modulePath) => {
+  try {
+    const loaded = require(modulePath);
+    return normalizeRouter(loaded, modulePath);
+  } catch (error) {
+    const isLoadError = error && error.name !== "TypeError";
+    const fsHint =
+      error && typeof error.message === "string" && /(EROFS|EACCES|EPERM)/i.test(error.message)
+        ? " Hint: this runtime may be read-only; avoid creating directories/files at module import time."
+        : "";
+    const details = error && error.stack ? error.stack : String(error);
+
+    const wrapped = new Error(
+      isLoadError
+        ? `Failed to load route module "${modulePath}".${fsHint}\nOriginal error: ${details}`
+        : `${error.message}\nRoute diagnostic for "${modulePath}" complete.`
+    );
+    wrapped.cause = error;
+    throw wrapped;
+  }
+};
+
+const userRoutes = loadRouteModule("./routes/userRoutes");
+const authRoutes = loadRouteModule("./routes/authRoutes");
+const facultyRoutes = loadRouteModule("./routes/facultyRoutes");
+const studentRoutes = loadRouteModule("./routes/studentRoutes");
+const profileRoutes = loadRouteModule("./routes/profileRoutes");
+const courseRoutes = loadRouteModule("./routes/courseRoutes");
+const medicalRecordRoutes = loadRouteModule("./routes/medicalRecordRoutes");
+const academicRoutes = loadRouteModule("./routes/academicRoutes");
+const classScheduleRoutes = loadRouteModule("./routes/classScheduleRoutes");
+const violationRoutes = loadRouteModule("./routes/violationRoutes");
+const violationTypeRoutes = loadRouteModule("./routes/violationTypeRoutes");
+const eventRoutes = loadRouteModule("./routes/eventRoutes");
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/faculty", facultyRoutes);

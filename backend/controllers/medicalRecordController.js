@@ -269,16 +269,18 @@ const updateMyMedicalRecord = async (req, res) => {
       });
     }
 
-    const lastCheckup = req.body.lastCheckup !== undefined ? normalizeText(req.body.lastCheckup) : record.lastCheckup;
-    const conditions = req.body.conditions !== undefined ? normalizeText(req.body.conditions) : record.conditions;
-    const bloodType = req.body.bloodType !== undefined ? normalizeText(req.body.bloodType) : record.bloodType;
-    const status = normalizeStatus(req.body.status) || "Pending Review";
-    const scope = normalizeScope(req.body.scope) || record.scope;
-    const eventId = req.body.event !== undefined ? await normalizeObjectId(req.body.event, Event) : record.event;
-    const documentAttached = normalizeText(req.body.fileName) || normalizeText(req.body.documentAttached) || "None";
+    const body = req.body || {};
 
-    if (req.body.name !== undefined) {
-      record.name = normalizeText(req.body.name) || record.name;
+    const lastCheckup = body.lastCheckup !== undefined ? normalizeText(body.lastCheckup) : record.lastCheckup;
+    const conditions = body.conditions !== undefined ? normalizeText(body.conditions) : record.conditions;
+    const bloodType = body.bloodType !== undefined ? normalizeText(body.bloodType) : record.bloodType;
+    const status = normalizeStatus(body.status) || "Pending Review";
+    const scope = normalizeScope(body.scope) || record.scope;
+    const eventId = body.event !== undefined ? await normalizeObjectId(body.event, Event) : record.event;
+    const documentAttached = normalizeText(body.fileName) || normalizeText(body.documentAttached) || "None";
+
+    if (body.name !== undefined) {
+      record.name = normalizeText(body.name) || record.name;
     }
 
     record.scope = scope;
@@ -289,19 +291,19 @@ const updateMyMedicalRecord = async (req, res) => {
     }
 
     if (
-      req.body.fileName !== undefined ||
-      req.body.storedFileName !== undefined ||
-      req.body.filePath !== undefined ||
-      req.body.mimeType !== undefined ||
-      req.body.fileSize !== undefined
+      body.fileName !== undefined ||
+      body.storedFileName !== undefined ||
+      body.filePath !== undefined ||
+      body.mimeType !== undefined ||
+      body.fileSize !== undefined
     ) {
       const document = normalizeDocument({
-        fileName: req.body.fileName,
-        storedFileName: req.body.storedFileName,
-        filePath: req.body.filePath,
-        mimeType: req.body.mimeType,
-        uploadDate: req.body.uploadDate || new Date().toISOString().split("T")[0],
-        fileSize: req.body.fileSize,
+        fileName: body.fileName,
+        storedFileName: body.storedFileName,
+        filePath: body.filePath,
+        mimeType: body.mimeType,
+        uploadDate: body.uploadDate || new Date().toISOString().split("T")[0],
+        fileSize: body.fileSize,
       });
 
       if (document) {
@@ -338,16 +340,20 @@ const addMyMedicalDocument = async (req, res) => {
       return res.status(404).json({ message: "Medical record not found" });
     }
 
+    const body = req.body || {};
+
     const document = normalizeDocument({
-      fileName: req.body.fileName,
-      storedFileName: req.body.storedFileName,
-      filePath: req.body.filePath,
-      mimeType: req.body.mimeType,
-      uploadDate: req.body.uploadDate || new Date().toISOString().split("T")[0],
-      fileSize: req.body.fileSize,
+      fileName: body.fileName,
+      storedFileName: body.storedFileName,
+      filePath: body.filePath,
+      mimeType: body.mimeType,
+      uploadDate: body.uploadDate || new Date().toISOString().split("T")[0],
+      fileSize: body.fileSize,
     });
     if (!document) {
-      return res.status(400).json({ message: "A valid file is required" });
+      return res.status(400).json({
+        message: "A valid file is required",
+      });
     }
 
     record.documents.push(document);

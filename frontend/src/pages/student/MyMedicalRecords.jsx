@@ -95,12 +95,13 @@ const MyMedicalRecords = () => {
   const handleSubmitRecord = async (e) => {
     e.preventDefault();
     try {
-      const payload = new FormData();
-      payload.append('scope', formData.scope);
-      payload.append('event', formData.scope === 'Event Requirement' ? formData.event : '');
-      payload.append('lastCheckup', formData.lastCheckup || '');
-      payload.append('conditions', formData.conditions || '');
-      payload.append('bloodType', formData.bloodType || '');
+      const payload = {
+        scope: formData.scope,
+        event: formData.scope === 'Event Requirement' ? formData.event : '',
+        lastCheckup: formData.lastCheckup || '',
+        conditions: formData.conditions || '',
+        bloodType: formData.bloodType || '',
+      };
 
       if (formData.scope === 'Event Requirement' && !formData.event) {
         setError('Please select an event requirement.');
@@ -108,12 +109,12 @@ const MyMedicalRecords = () => {
       }
 
       if (formData.file) {
-        payload.append('file', formData.file);
+        payload.fileName = formData.file.name;
+        payload.mimeType = formData.file.type || '';
+        payload.fileSize = `${(formData.file.size / 1024).toFixed(1)} KB`;
       }
 
-      const response = await axios.put('/api/medical-records/me', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await axios.put('/api/medical-records/me', payload);
       setRecord(normalizeMedicalRecord(response.data));
       setIsModalOpen(false);
     } catch (err) {
@@ -127,11 +128,12 @@ const MyMedicalRecords = () => {
 
     try {
       setIsUploading(true);
-      const payload = new FormData();
-      payload.append('file', file);
-      const response = await axios.post('/api/medical-records/me/documents', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const payload = {
+        fileName: file.name,
+        mimeType: file.type || '',
+        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+      };
+      const response = await axios.post('/api/medical-records/me/documents', payload);
       setRecord(normalizeMedicalRecord(response.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to upload document.');

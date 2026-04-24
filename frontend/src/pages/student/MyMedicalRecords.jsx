@@ -1,117 +1,38 @@
-import React, { useState, useRef } from 'react';
-import { 
+import React, { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import {
   Activity, Calendar, Clock, User, HeartPulse, ShieldAlert,
   FileCheck, AlertCircle, UploadCloud, FileText, Download, Trash2, Edit, X, Plus,
   Droplet, Scale, Phone, Shield, ClipboardList, Stethoscope
 } from 'lucide-react';
 import './MyMedicalRecords.css';
 
-const MOCK_STUDENT_ID = '2023-0001';
+const normalizeMedicalRecord = (data) => ({
+  id: data._id || data.id,
+  scope: data.scope || 'Standalone',
+  event: data.event || null,
+  studentId: data.studentId || '',
+  name: data.name || '',
+  bloodType: data.bloodType || '',
+  conditions: data.conditions || '',
+  lastCheckup: data.lastCheckup || '',
+  status: data.status || 'Pending Review',
+  documents: data.documents || [],
+  history: data.history || []
+});
 
 const MyMedicalRecords = () => {
-  const [record, setRecord] = useState(() => {
-    try {
-      const stored = localStorage.getItem('ccs_medical_records');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const myRecord = parsed.find(r => r.studentId === MOCK_STUDENT_ID);
-        if (myRecord) {
-          return myRecord;
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing medical records:', error);
-    }
-    
-    // Fallback if not found in LocalStorage
-    return { 
-      id: '1', 
-      studentId: MOCK_STUDENT_ID, 
-      name: 'John Doe', 
-      bloodType: 'O+',
-      height: '170 cm',
-      weight: '65 kg',
-      allergies: 'None',
-      vaccinationStatus: 'Fully Vaccinated',
-      emergencyContactName: 'Jane Doe',
-      emergencyContactNumber: '09123456789',
-      conditions: 'Asthma', 
-      lastCheckup: '2023-11-15', 
-      status: 'Cleared' 
-    };
-  });
-
-  const [documents, setDocuments] = useState(() => {
-    try {
-      const storedDocs = localStorage.getItem('ccs_medical_documents');
-      if (storedDocs) {
-        const allDocs = JSON.parse(storedDocs);
-        return allDocs.filter(d => d.studentId === MOCK_STUDENT_ID);
-      }
-    } catch (err) {
-      console.error('Failed to parse documents', err);
-    }
-    return [];
-  });
-
-  const [pastRecords, setPastRecords] = useState(() => {
-    try {
-      const storedLogs = localStorage.getItem('ccs_medical_logs');
-      if (storedLogs) {
-        const allLogs = JSON.parse(storedLogs);
-        const myLogs = allLogs.filter(L => L.studentId === MOCK_STUDENT_ID);
-        if (myLogs.length > 0) {
-          // Sort by date descending
-          return myLogs.sort((a, b) => new Date(b.dateCompleted) - new Date(a.dateCompleted));
-        }
-      }
-    } catch (err) {
-      console.error('Failed to parse logs', err);
-    }
-    
-    // Fallback mock data
-    return [
-      {
-        id: 'mock-log-1',
-        studentId: MOCK_STUDENT_ID,
-        checkupDate: '2023-11-15',
-        conditions: 'Asthma',
-        bloodType: 'O+',
-        height: '170 cm',
-        weight: '65 kg',
-        allergies: 'None',
-        vaccinationStatus: 'Fully Vaccinated',
-        emergencyContactName: 'Jane Doe',
-        emergencyContactNumber: '09123456789',
-        dateCompleted: '2023-11-20',
-        status: 'Cleared',
-        documentAttached: 'med-cert-nov23.pdf'
-      },
-      {
-        id: 'mock-log-2',
-        studentId: MOCK_STUDENT_ID,
-        checkupDate: '2022-08-10',
-        conditions: 'Asthma, Mild Anemia',
-        bloodType: 'O+',
-        height: '168 cm',
-        weight: '63 kg',
-        allergies: 'None',
-        vaccinationStatus: 'Partially Vaccinated',
-        emergencyContactName: 'Jane Doe',
-        emergencyContactNumber: '09123456789',
-        dateCompleted: '2022-08-12',
-        status: 'Cleared',
-        documentAttached: 'clearance-aug22.pdf'
-      }
-    ];
-  });
-
-  const fileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'history'
-  
   // Modal state
+  const [events, setEvents] = useState([]);
+  const [record, setRecord] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
+    scope: 'Standalone',
+    event: '',
     lastCheckup: '',
     conditions: '',
     bloodType: '',
@@ -123,18 +44,48 @@ const MyMedicalRecords = () => {
     emergencyContactNumber: '',
     file: null
   });
+  const fileInputRef = useRef(null);
+
+  const loadEvents = async () => {
+    try {
+      const response = await axios.get('/api/events');
+      setEvents(response.data || []);
+    } catch (err) {
+      setEvents([]);
+    }
+  };
+
+  const loadMyRecord = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await axios.get('/api/medical-records/me');
+      setRecord(normalizeMedicalRecord(response.data));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load medical record.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMyRecord();
+    loadEvents();
+  }, []);
 
   const handleOpenModal = () => {
     setFormData({
-      lastCheckup: record.lastCheckup || '',
-      conditions: record.conditions || '',
-      bloodType: record.bloodType || '',
-      height: record.height || '',
-      weight: record.weight || '',
-      allergies: record.allergies || '',
-      vaccinationStatus: record.vaccinationStatus || '',
-      emergencyContactName: record.emergencyContactName || '',
-      emergencyContactNumber: record.emergencyContactNumber || '',
+      lastCheckup: record?.lastCheckup || '',
+      conditions: record?.conditions || '',
+      bloodType: record?.bloodType || '',
+      height: record?.height || '',
+      weight: record?.weight || '',
+      allergies: record?.allergies || '',
+      vaccinationStatus: record?.vaccinationStatus || '',
+      emergencyContactName: record?.emergencyContactName || '',
+      emergencyContactNumber: record?.emergencyContactNumber || '',
+      scope: record?.scope || 'Standalone',
+      event: record?.event?._id || record?.event || '',
       file: null
     });
     setIsModalOpen(true);
@@ -146,159 +97,110 @@ const MyMedicalRecords = () => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, file: e.target.files[0] }));
+      setFormData((prev) => ({ ...prev, file: e.target.files[0] }));
     }
   };
 
-  const handleSubmitRecord = (e) => {
+  const handleSubmitRecord = async (e) => {
     e.preventDefault();
-    
-    // 1. Update the student's main medical record
-    const updatedRecord = {
-      ...record,
-      lastCheckup: formData.lastCheckup,
-      conditions: formData.conditions,
-      bloodType: formData.bloodType,
-      height: formData.height,
-      weight: formData.weight,
-      allergies: formData.allergies,
-      vaccinationStatus: formData.vaccinationStatus,
-      emergencyContactName: formData.emergencyContactName,
-      emergencyContactNumber: formData.emergencyContactNumber,
-      status: 'Pending Review' // Status pending when returning new records
-    };
-    
-    setRecord(updatedRecord);
-
     try {
-      const stored = localStorage.getItem('ccs_medical_records');
-      let allRecords = stored ? JSON.parse(stored) : [];
-      let foundIndex = allRecords.findIndex(r => r.studentId === MOCK_STUDENT_ID);
-      
-      if (foundIndex >= 0) {
-        allRecords[foundIndex] = updatedRecord;
-      } else {
-        allRecords.push(updatedRecord);
-      }
-      localStorage.setItem('ccs_medical_records', JSON.stringify(allRecords));
-    } catch (err) {
-      console.error(err);
-    }
-
-    // 2. If there's a file attached as proof, save it
-    if (formData.file) {
-      const newDoc = {
-        id: Date.now().toString(),
-        studentId: MOCK_STUDENT_ID,
-        fileName: formData.file.name,
-        uploadDate: new Date().toISOString().split('T')[0],
-        fileSize: (formData.file.size / 1024).toFixed(1) + ' KB'
+      const payload = {
+        scope: formData.scope,
+        event: formData.scope === 'Event Requirement' ? formData.event : '',
+        lastCheckup: formData.lastCheckup || '',
+        conditions: formData.conditions || '',
+        bloodType: formData.bloodType || '',
+        height: formData.height || '',
+        weight: formData.weight || '',
+        allergies: formData.allergies || '',
+        vaccinationStatus: formData.vaccinationStatus || '',
+        emergencyContactName: formData.emergencyContactName || '',
+        emergencyContactNumber: formData.emergencyContactNumber || ''
       };
 
-      const newDocs = [...documents, newDoc];
-      setDocuments(newDocs);
-
-      try {
-        const existingDocs = localStorage.getItem('ccs_medical_documents');
-        const allDocs = existingDocs ? JSON.parse(existingDocs) : [];
-        allDocs.push(newDoc);
-        localStorage.setItem('ccs_medical_documents', JSON.stringify(allDocs));
-      } catch (err) {
-        console.error(err);
+      if (formData.scope === 'Event Requirement' && !formData.event) {
+        setError('Please select an event requirement.');
+        return;
       }
-    }
 
-    // 3. Save as a local medical history log
-    const logDate = new Date().toISOString().split('T')[0];
-    const newLog = {
-      id: Date.now().toString() + '-log',
-      studentId: MOCK_STUDENT_ID,
-      checkupDate: formData.lastCheckup,
-      conditions: formData.conditions,
-      bloodType: formData.bloodType,
-      height: formData.height,
-      weight: formData.weight,
-      allergies: formData.allergies,
-      vaccinationStatus: formData.vaccinationStatus,
-      emergencyContactName: formData.emergencyContactName,
-      emergencyContactNumber: formData.emergencyContactNumber,
-      dateCompleted: logDate,
-      status: 'Pending Review',
-      documentAttached: formData.file ? formData.file.name : 'None'
-    };
+      if (formData.file) {
+        payload.fileName = formData.file.name;
+        payload.mimeType = formData.file.type || '';
+        payload.fileSize = `${(formData.file.size / 1024).toFixed(1)} KB`;
+      }
 
-    const newRecordsList = [newLog, ...pastRecords];
-    setPastRecords(newRecordsList);
-
-    try {
-      const storedLogs = localStorage.getItem('ccs_medical_logs');
-      const allLogs = storedLogs ? JSON.parse(storedLogs) : [];
-      allLogs.push(newLog);
-      localStorage.setItem('ccs_medical_logs', JSON.stringify(allLogs));
+      const response = await axios.put('/api/medical-records/me', payload);
+      setRecord(normalizeMedicalRecord(response.data));
+      setIsModalOpen(false);
     } catch (err) {
-      console.error(err);
+      setError(err.response?.data?.message || 'Failed to save medical record.');
     }
-
-    setIsModalOpen(false);
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+  const handleUploadDocument = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const newDoc = {
-      id: Date.now().toString(),
-      studentId: MOCK_STUDENT_ID,
-      fileName: file.name,
-      uploadDate: new Date().toISOString().split('T')[0],
-      fileSize: (file.size / 1024).toFixed(1) + ' KB'
-    };
-
-    const newDocs = [...documents, newDoc];
-    setDocuments(newDocs);
-
-    // Save to global local storage
     try {
-      const existing = localStorage.getItem('ccs_medical_documents');
-      const allDocs = existing ? JSON.parse(existing) : [];
-      allDocs.push(newDoc);
-      localStorage.setItem('ccs_medical_documents', JSON.stringify(allDocs));
+      setIsUploading(true);
+      const payload = {
+        fileName: file.name,
+        mimeType: file.type || '',
+        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+      };
+      const response = await axios.post('/api/medical-records/me/documents', payload);
+      setRecord(normalizeMedicalRecord(response.data));
     } catch (err) {
-      console.error(err);
-    }
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleDeleteDocument = (docId) => {
-    if (!window.confirm("Are you sure you want to remove this document?")) return;
-
-    const newDocs = documents.filter(d => d.id !== docId);
-    setDocuments(newDocs);
-
-    // Update global storage
-    try {
-      const existing = localStorage.getItem('ccs_medical_documents');
-      if (existing) {
-        const allDocs = JSON.parse(existing);
-        const updatedAllDocs = allDocs.filter(d => d.id !== docId);
-        localStorage.setItem('ccs_medical_documents', JSON.stringify(updatedAllDocs));
+      setError(err.response?.data?.message || 'Failed to upload document.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    } catch (err) {
-      console.error(err);
     }
   };
 
-  if (!record) return <div className="medical-loading">Loading Health Profile...</div>;
+  const handleDeleteDocument = async (docId) => {
+    if (!window.confirm('Are you sure you want to remove this document?')) return;
 
+    try {
+      const response = await axios.delete(`/api/medical-records/me/documents/${docId}`);
+      setRecord(normalizeMedicalRecord(response.data));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete document.');
+    }
+  };
+
+  const handleDownloadDocument = async (doc) => {
+    try {
+      const docId = doc?._id || doc?.id;
+      if (!docId) return;
+      const response = await axios.get(`/api/medical-records/me/documents/${docId}/download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = doc.fileName || 'medical-document';
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to download document.');
+    }
+  };
+
+  if (loading) return <div className="medical-loading">Loading Health Profile...</div>;
+  if (!record) return <div className="medical-loading">No medical record found.</div>;
+
+  const documents = record.documents || [];
+  const pastRecords = [...(record.history || [])];
   const isCleared = record.status === 'Cleared';
   const needsUpdate = record.status === 'Needs Update';
   const isPending = record.status === 'Pending Review';
@@ -328,25 +230,29 @@ const MyMedicalRecords = () => {
               {' '}
               {isPending ? 'Edit Pending Record' : isCleared ? 'Record Cleared (Locked)' : 'Add New Record'}
             </button>
+        </div>
+
+        {error && (
+          <div style={{ marginTop: '12px', color: '#b91c1c' }}>
+            {error}
           </div>
-          
-          {/* Dynamic Status Badging */}
-          <div className={`sm-status-banner ${record.status.toLowerCase().replace(' ', '-')}`}>
-            {isCleared && <FileCheck size={20} />}
-            {needsUpdate && <AlertCircle size={20} />}
-            {isPending && <Clock size={20} />}
-            <div className="banner-text">
+        )}
+
+        <div className={`sm-status-banner ${record.status.toLowerCase().replace(' ', '-')}`}>
+          {isCleared && <FileCheck size={20} />}
+          {needsUpdate && <AlertCircle size={20} />}
+          {isPending && <Clock size={20} />}
+          <div className="banner-text">
             <strong>Clearance Status: {record.status}</strong>
             <span>
-              {isCleared ? 'You are cleared for all campus activities.' : 
-               needsUpdate ? 'Please visit the clinic to update your medical file.' : 
+              {isCleared ? 'You are cleared for all campus activities.' :
+               needsUpdate ? 'Please visit the clinic to update your medical file.' :
                'Your medical status is currently under review.'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Top Stat Cards */}
       <div className="sm-stats-container">
         <div className="sm-stat-card">
           <div className={`stat-icon-wrapper ${isCleared ? 'success' : needsUpdate ? 'danger' : 'warning'}`}>
@@ -379,15 +285,14 @@ const MyMedicalRecords = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
       <div className="sm-tabs-container">
-        <button 
+        <button
           className={`sm-tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           <User size={18} /> Health Overview
         </button>
-        <button 
+        <button
           className={`sm-tab ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -502,30 +407,21 @@ const MyMedicalRecords = () => {
 
             {/* Document Upload Section */}
             <div className="profile-section documents-section" style={{ marginTop: '0px' }}>
-              <div className="section-header">
-                <FileText size={18} className="section-icon" />
-                <h4 style={{ flex: 1 }}>Uploaded Medical Documents</h4>
-                  <button 
-                    className="upload-btn-small" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isCleared}
-                    style={{ 
-                      opacity: isCleared ? 0.6 : 1,
-                      cursor: isCleared ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    <UploadCloud size={14} /> Upload
-                  </button>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    style={{ display: 'none' }} 
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileUpload}
-                    disabled={isCleared}
-                  />
-                </div>
-              
+              <div className="documents-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText className="card-icon" size={20} /> Uploaded Medical Documents</h4>
+                <button className="upload-btn" onClick={() => fileInputRef.current?.click()} disabled={isUploading || isCleared}>
+                  <UploadCloud size={16} /> {isUploading ? 'Uploading...' : 'Upload New'}
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleUploadDocument}
+                  disabled={isCleared}
+                />
+              </div>
+
               <div className="documents-list">
                 {documents.length === 0 ? (
                   <div className="no-docs">
@@ -533,8 +429,8 @@ const MyMedicalRecords = () => {
                     <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>No documents uploaded yet.</p>
                   </div>
                 ) : (
-                  documents.map(doc => (
-                    <div key={doc.id} className="doc-item">
+                  documents.map((doc) => (
+                    <div key={doc._id || doc.id} className="doc-item">
                       <div className="doc-info">
                         <FileText size={18} className="doc-icon" />
                         <div className="doc-details">
@@ -548,6 +444,12 @@ const MyMedicalRecords = () => {
                               <Trash2 size={14} />
                             </button>
                           )}
+                        <button className="doc-action-btn" onClick={() => handleDownloadDocument(doc)} title="Download">
+                          <Download size={16} />
+                        </button>
+                        <button className="doc-action-btn delete" onClick={() => handleDeleteDocument(doc._id || doc.id)} title="Delete">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </div>
                   ))
@@ -557,7 +459,6 @@ const MyMedicalRecords = () => {
           </div>
         )}
 
-        {/* Right Column / Bottom: Past Records */}
         {activeTab === 'history' && (
           <div className="sm-history-card">
             <div className="card-header">
@@ -572,7 +473,7 @@ const MyMedicalRecords = () => {
                 </div>
               ) : (
                 pastRecords.map((log) => (
-                  <div key={log.id} className="record-card">
+                  <div key={log._id || log.id} className="record-card">
                     <div className="record-card-header">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div className="record-card-icon">
@@ -580,10 +481,10 @@ const MyMedicalRecords = () => {
                         </div>
                         <div>
                           <h5>Medical Record Filed</h5>
-                          <span className="record-date">{log.dateCompleted}</span>
+                          <span className="record-date">{log.dateCompleted || 'N/A'}</span>
                         </div>
                       </div>
-                      <span className={`visit-status ${log.status === 'Cleared' ? 'cleared' : 'pending'}`}>
+                      <span className={`visit-status ${(log.status === 'Cleared') ? 'cleared' : 'pending'}`}>
                         {log.status || 'Pending'}
                       </span>
                     </div>
@@ -591,7 +492,7 @@ const MyMedicalRecords = () => {
                       <div className="record-card-grid">
                         <div className="record-detail-item">
                           <span className="detail-label">Checkup Date</span>
-                          <span className="detail-value">{log.checkupDate}</span>
+                          <span className="detail-value">{log.checkupDate || 'N/A'}</span>
                         </div>
                         <div className="record-detail-item">
                           <span className="detail-label">Blood Type</span>
@@ -637,7 +538,6 @@ const MyMedicalRecords = () => {
         )}
       </div>
 
-      {/* Log New Medical Record Modal */}
       {isModalOpen && (
         <div className="medical-modal-overlay">
           <div className="medical-modal-box">
@@ -752,26 +652,47 @@ const MyMedicalRecords = () => {
                     required
                   ></textarea>
                 </div>
+                <div className="medical-form-group full-width">
+                  <label>Record Type</label>
+                  <select name="scope" value={formData.scope} onChange={handleFormChange}>
+                    <option value="Standalone">Standalone</option>
+                    <option value="Event Requirement">Event Requirement</option>
+                  </select>
+                </div>
+                
+                {formData.scope === 'Event Requirement' && (
+                  <div className="medical-form-group full-width">
+                    <label>Event Requirement</label>
+                    <select name="event" value={formData.event} onChange={handleFormChange}>
+                      <option value="">Select an event...</option>
+                      {events.map((event) => (
+                        <option key={event._id || event.id} value={event._id || event.id}>
+                          {event.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="medical-form-group full-width">
                   <label>Supporting Document (Proof)</label>
-                <div className="file-input-wrapper">
-                  <input 
-                    type="file" 
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileSelect}
-                    className="styled-file-input"
-                  />
+                  <div className="file-input-wrapper">
+                    <input 
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileSelect}
+                      className="styled-file-input"
+                    />
+                  </div>
+                  <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    Please attach a clear photo or PDF of your medical certificate or checkup result.
+                  </small>
                 </div>
-                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Please attach a clear photo or PDF of your medical certificate or checkup result.
-                </small>
-              </div>
               </div>
 
               <div className="medical-form-actions">
                 <button type="button" className="btn-secondary" onClick={handleCloseModal}>Cancel</button>
-                <button type="submit" className="btn-primary">Submit Record</button>
+                <button type="submit" className="btn-primary">Save Record</button>
               </div>
             </form>
           </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarRange, Layers, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { CalendarRange, Layers, Plus, Edit2, Trash2, X, ChevronDown, BookOpen } from 'lucide-react';
 import axios from 'axios';
 import './SchoolYearSectionManagement.css';
 
@@ -16,7 +16,13 @@ const DEFAULT_SECTION_FORM = {
   sectionName: '',
   yearLevel: '1st Year',
   program: 'BSIT',
+  academicTrack: '',
   maxStudents: ''
+};
+
+const DEFAULT_TRACK_FORM = {
+  name: '',
+  code: ''
 };
 
 const formatSYLabel = (item) => `${item.schoolYear} (${item.semester})`;
@@ -24,26 +30,39 @@ const formatSYLabel = (item) => `${item.schoolYear} (${item.semester})`;
 const SchoolYearSectionManagement = () => {
   const [schoolYears, setSchoolYears] = useState([]);
   const [sections, setSections] = useState([]);
+  const [academicTracks, setAcademicTracks] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [syModalOpen, setSyModalOpen] = useState(false);
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
+  const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [trackCoursesModalOpen, setTrackCoursesModalOpen] = useState(false);
   const [editingSchoolYear, setEditingSchoolYear] = useState(null);
   const [editingSection, setEditingSection] = useState(null);
+  const [editingTrack, setEditingTrack] = useState(null);
+  const [selectedTrackForCourses, setSelectedTrackForCourses] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
 
   const [syForm, setSyForm] = useState(DEFAULT_SY_FORM);
   const [sectionForm, setSectionForm] = useState(DEFAULT_SECTION_FORM);
+  const [trackForm, setTrackForm] = useState(DEFAULT_TRACK_FORM);
+  const [trackCourses, setTrackCourses] = useState({});
 
   const loadData = async () => {
     try {
       setErrorMessage('');
-      const [syRes, sectionRes] = await Promise.all([
+      const [syRes, sectionRes, tracksRes, coursesRes] = await Promise.all([
         axios.get('/api/academic/school-years'),
-        axios.get('/api/academic/sections')
+        axios.get('/api/academic/sections'),
+        axios.get('/api/academic/academic-tracks'),
+        axios.get('/api/courses')
       ]);
 
       setSchoolYears(syRes.data || []);
       setSections(sectionRes.data || []);
+      setAcademicTracks(tracksRes.data || []);
+      setAllCourses(coursesRes.data || []);
     } catch (err) {
       console.error('Failed to load school year/sections:', err);
       setErrorMessage(err.response?.data?.message || 'Failed to load school year and section records.');
@@ -85,6 +104,7 @@ const SchoolYearSectionManagement = () => {
         sectionName: item.sectionName || '',
         yearLevel: item.yearLevel || '1st Year',
         program: item.program || 'BSIT',
+        academicTrack: item.academicTrack?._id || item.academicTrack || '',
         maxStudents: item.maxStudents || ''
       });
     } else {
@@ -95,6 +115,20 @@ const SchoolYearSectionManagement = () => {
       });
     }
     setSectionModalOpen(true);
+  };
+
+  const openTrackModal = (item = null) => {
+    if (item) {
+      setEditingTrack(item);
+      setTrackForm({
+        name: item.name || '',
+        code: item.code || ''
+      });
+    } else {
+      setEditingTrack(null);
+      setTrackForm(DEFAULT_TRACK_FORM);
+    }
+    setTrackModalOpen(true);
   };
 
   const submitSY = async (e) => {
@@ -136,6 +170,7 @@ const SchoolYearSectionManagement = () => {
         sectionName: sectionForm.sectionName,
         yearLevel: sectionForm.yearLevel,
         program: sectionForm.program,
+        academicTrack: sectionForm.academicTrack || undefined,
         maxStudents: sectionForm.maxStudents || undefined
       };
 
@@ -152,6 +187,32 @@ const SchoolYearSectionManagement = () => {
     } catch (err) {
       console.error('Failed to save section:', err);
       setErrorMessage(err.response?.data?.message || 'Failed to save section.');
+    }
+  };
+
+  const submitTrack = async (e) => {
+    e.preventDefault();
+
+    try {
+      setErrorMessage('');
+      const payload = {
+        name: trackForm.name,
+        code: trackForm.code
+      };
+
+      if (editingTrack) {
+        await axios.put(`/api/academic/academic-tracks/${editingTrack._id}`, payload);
+      } else {
+        await axios.post('/api/academic/academic-tracks', payload);
+      }
+
+      setTrackModalOpen(false);
+      setEditingTrack(null);
+      setTrackForm(DEFAULT_TRACK_FORM);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to save academic track:', err);
+      setErrorMessage(err.response?.data?.message || 'Failed to save academic track.');
     }
   };
 
@@ -181,6 +242,51 @@ const SchoolYearSectionManagement = () => {
     }
   };
 
+  const openSectionCoursesModal = (sectionOrTrack) => {
+    const track = typeof sectionOrTrack === 'string' 
+      ? { _id: sectionOrTrack, name: '', code: '', courses: [] }
+      : sectionOrTrack;
+    setSelectedTrackForCourses(track);
+    setTrackCourses({});
+    setTrackCoursesModalOpen(true);
+  };
+
+  const toggleCourseForTrack = (courseId) => {
+    setTrackCourses((prev) => ({
+      ...prev,
+      [courseId]: !prev[courseId],
+    }));
+  };
+
+  const saveTrackCourses = async () => {
+    if (!selectedTrackForCourses || !selectedTrackForCourses._id) {
+      setErrorMessage('Invalid academic track');
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      const selectedCourseIds = Object.keys(trackCourses).filter((id) => trackCourses[id]);
+      await axios.put(`/api/academic/academic-tracks/${selectedTrackForCourses._id}/courses`, {
+        courses: selectedCourseIds,
+      });
+      setTrackCoursesModalOpen(false);
+      setSelectedTrackForCourses(null);
+      setTrackCourses({});
+      await loadData();
+    } catch (err) {
+      console.error('Failed to save track courses:', err);
+      setErrorMessage(err.response?.data?.message || 'Failed to save track courses.');
+    }
+  };
+
+  const toggleExpandSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
   return (
     <div className="sys-container">
       {errorMessage && <div className="sys-error">{errorMessage}</div>}
@@ -194,7 +300,7 @@ const SchoolYearSectionManagement = () => {
 
       <div className="sys-grid">
         <section className="sys-card">
-          <div className="sys-card-header">
+            <div className="sys-card-header">
             <div className="sys-title-wrap">
               <CalendarRange size={20} />
               <h3>School Year / Semester</h3>
@@ -259,6 +365,7 @@ const SchoolYearSectionManagement = () => {
                   <th>Section</th>
                   <th>School Year</th>
                   <th>Year/Program</th>
+                  <th>Academic Track</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -268,8 +375,18 @@ const SchoolYearSectionManagement = () => {
                     <td>{item.sectionName}</td>
                     <td>{item.schoolYearSemester ? formatSYLabel(item.schoolYearSemester) : '-'}</td>
                     <td>{`${item.yearLevel || '-'} / ${item.program || '-'}`}</td>
+                    <td>{item.academicTrack?.name || '-'}</td>
                     <td>
                       <div className="sys-actions">
+                        {item.academicTrack && (
+                          <button 
+                            className="sys-icon-btn" 
+                            onClick={() => openSectionCoursesModal(item.academicTrack)}
+                            title="Manage Courses"
+                          >
+                            <BookOpen size={14} />
+                          </button>
+                        )}
                         <button className="sys-icon-btn" onClick={() => openSectionModal(item)} title="Edit">
                           <Edit2 size={14} />
                         </button>
@@ -281,7 +398,67 @@ const SchoolYearSectionManagement = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="4" className="sys-empty">No sections yet.</td>
+                    <td colSpan="5" className="sys-empty">No sections yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="sys-card">
+          <div className="sys-card-header">
+            <div className="sys-title-wrap">
+              <BookOpen size={20} />
+              <h3>Academic Tracks</h3>
+            </div>
+            <button className="sys-btn" onClick={() => openTrackModal()}>
+              <Plus size={16} /> Add Track
+            </button>
+          </div>
+
+          <div className="sys-table-wrap">
+            <table className="sys-table">
+              <thead>
+                <tr>
+                  <th>Track Name</th>
+                  <th>Code</th>
+                  <th>Courses</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {academicTracks.length > 0 ? academicTracks.map((item) => (
+                  <tr key={item._id}>
+                    <td>{item.name}</td>
+                    <td>{item.code || '-'}</td>
+                    <td>
+                      <button 
+                        className="sys-course-btn" 
+                        onClick={() => openSectionCoursesModal(item)}
+                        title="Manage Courses"
+                      >
+                        <BookOpen size={14} /> {item.courses?.length || 0} courses
+                      </button>
+                    </td>
+                    <td>
+                      <div className="sys-actions">
+                        <button className="sys-icon-btn" onClick={() => openTrackModal(item)} title="Edit">
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="sys-icon-btn danger" onClick={() => {
+                          if (window.confirm('Delete this academic track?')) {
+                            axios.delete(`/api/academic/academic-tracks/${item._id}`).then(() => loadData());
+                          }
+                        }} title="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan="4" className="sys-empty">No academic tracks yet.</td>
                   </tr>
                 )}
               </tbody>
@@ -434,11 +611,103 @@ const SchoolYearSectionManagement = () => {
                 />
               </label>
 
+              <label>
+                Academic Track (Optional)
+                <select
+                  value={sectionForm.academicTrack}
+                  onChange={(e) => setSectionForm((prev) => ({ ...prev, academicTrack: e.target.value }))}
+                >
+                  <option value="">Select academic track</option>
+                  {academicTracks.map((item) => (
+                    <option key={item._id} value={item._id}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
+
               <div className="sys-form-actions">
                 <button type="button" className="sys-btn secondary" onClick={() => setSectionModalOpen(false)}>Cancel</button>
                 <button type="submit" className="sys-btn">Save</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {trackModalOpen && (
+        <div className="sys-modal-overlay">
+          <div className="sys-modal">
+            <div className="sys-modal-header">
+              <h4>{editingTrack ? 'Edit Academic Track' : 'Add Academic Track'}</h4>
+              <button onClick={() => setTrackModalOpen(false)} className="sys-close-btn">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={submitTrack} className="sys-form">
+              <label>
+                Track Name
+                <input
+                  type="text"
+                  value={trackForm.name}
+                  onChange={(e) => setTrackForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. BSIT Core Curriculum"
+                  required
+                />
+              </label>
+
+              <label>
+                Code
+                <input
+                  type="text"
+                  value={trackForm.code}
+                  onChange={(e) => setTrackForm((prev) => ({ ...prev, code: e.target.value }))}
+                  placeholder="e.g. BSIT-CORE"
+                  required
+                />
+              </label>
+
+              <div className="sys-form-actions">
+                <button type="button" className="sys-btn secondary" onClick={() => setTrackModalOpen(false)}>Cancel</button>
+                <button type="submit" className="sys-btn">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {trackCoursesModalOpen && selectedTrackForCourses && (
+        <div className="sys-modal-overlay">
+          <div className="sys-modal sys-modal-courses">
+            <div className="sys-modal-header">
+              <h4>Manage Courses for {selectedTrackForCourses.name}</h4>
+              <button onClick={() => setTrackCoursesModalOpen(false)} className="sys-close-btn">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="sys-courses-list">
+              {allCourses.length > 0 ? (
+                allCourses.map((course) => (
+                  <label key={course._id} className="sys-course-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={trackCourses[course._id] || (selectedTrackForCourses.courses?.includes(course._id))}
+                      onChange={() => toggleCourseForTrack(course._id)}
+                    />
+                    <span className="course-info">
+                      <strong>{course.code}</strong> - {course.desc}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <p className="sys-empty">No courses available.</p>
+              )}
+            </div>
+
+            <div className="sys-form-actions">
+              <button type="button" className="sys-btn secondary" onClick={() => setTrackCoursesModalOpen(false)}>Cancel</button>
+              <button type="button" className="sys-btn" onClick={saveTrackCourses}>Save Courses</button>
+            </div>
           </div>
         </div>
       )}

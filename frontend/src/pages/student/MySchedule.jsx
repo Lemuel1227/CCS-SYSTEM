@@ -1,64 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Calendar as CalendarIcon, Clock, MapPin, User } from 'lucide-react';
 import './MySchedule.css';
 
 const MySchedule = () => {
-  // eslint-disable-next-line no-unused-vars
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  // Mock Schedule Data for Student
-  const scheduleData = [
-    {
-      id: 1,
-      subjectCode: 'CC104',
-      subjectName: 'Data Structures and Algorithms',
-      time: '08:00 AM - 11:00 AM',
-      day: 'Monday',
-      room: 'Lab 1',
-      instructor: 'Prof. Alan Turing',
-      type: 'Laboratory'
-    },
-    {
-      id: 2,
-      subjectCode: 'SE101',
-      subjectName: 'Software Engineering 1',
-      time: '01:00 PM - 03:00 PM',
-      day: 'Tuesday',
-      room: 'Room 302',
-      instructor: 'Dr. Grace Hopper',
-      type: 'Lecture'
-    },
-    {
-      id: 3,
-      subjectCode: 'GE-EL1',
-      subjectName: 'Elective 1',
-      time: '10:00 AM - 12:00 PM',
-      day: 'Wednesday',
-      room: 'Room 205',
-      instructor: 'Ms. Ada Lovelace',
-      type: 'Lecture'
-    },
-    {
-      id: 4,
-      subjectCode: 'CC105',
-      subjectName: 'Information Management',
-      time: '02:00 PM - 05:00 PM',
-      day: 'Thursday',
-      room: 'Lab 3',
-      instructor: 'Mr. John von Neumann',
-      type: 'Laboratory'
-    },
-    {
-      id: 5,
-      subjectCode: 'PE3',
-      subjectName: 'Physical Education 3',
-      time: '08:00 AM - 10:00 AM',
-      day: 'Friday',
-      room: 'Gymnasium',
-      instructor: 'Coach Smith',
-      type: 'Activity'
-    },
-  ];
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const loadSchedule = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/students/me/schedule');
+        setSchedules(response.data || []);
+      } catch (err) {
+        console.error('Failed to load schedule:', err);
+        setErrorMessage(err.response?.data?.message || 'Failed to load schedule.');
+        setSchedules([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSchedule();
+  }, []);
+
+  const scheduleData = schedules.map((item) => ({
+    id: item._id,
+    subjectCode: item.course?.code || 'N/A',
+    subjectName: item.course?.desc || 'Untitled Course',
+    time: `${item.timeStart} - ${item.timeEnd}`,
+    day: item.dayOfWeek,
+    room: item.roomName,
+    instructor: item.faculty ? [item.faculty.firstName, item.faculty.lastName].filter(Boolean).join(' ') : 'TBA',
+    type: item.scheduleType || 'Lecture'
+  }));
 
   const daysOfWeek = ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const [activeDay, setActiveDay] = useState('All');
@@ -105,47 +83,61 @@ const MySchedule = () => {
       <div className="schedule-content-wrapper single-column">
         {/* Classes List */}
         <div className="schedule-main-content">
-          <div className="day-header">
-            <h2>{activeDay === 'All' ? 'All Classes' : `${activeDay}'s Classes`}</h2>
-            <div className="total-classes">
-              {filteredSchedule.length} {filteredSchedule.length === 1 ? 'Class' : 'Classes'}
+          {errorMessage && (
+            <div style={{ color: '#dc2626', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px', marginBottom: '16px' }}>
+              {errorMessage}
             </div>
-          </div>
+          )}
 
-          {filteredSchedule.length > 0 ? (
-            <div className="agenda-list">
-              {filteredSchedule.map((cls) => (
-                <div className="agenda-card" key={cls.id}>
-                  <div className="agenda-time-column">
-                    {activeDay === 'All' && <span className="day-text">{cls.day}</span>}
-                    <Clock size={16} />
-                    <span className="time-text">{cls.time.split(' - ')[0]}</span>
-                    <span className="time-end">{cls.time.split(' - ')[1]}</span>
-                  </div>
-                  <div className={`agenda-details-column type-${cls.type.toLowerCase()}`}>
-                    <div className="class-type-tag">{cls.type}</div>
-                    <h3 className="subject-name">{cls.subjectCode}: {cls.subjectName}</h3>
-                    
-                    <div className="class-meta">
-                      <div className="meta-item">
-                        <MapPin size={15} />
-                        <span>{cls.room}</span>
-                      </div>
-                      <div className="meta-item">
-                        <User size={15} />
-                        <span>{cls.instructor}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              Loading schedule...
             </div>
           ) : (
-            <div className="empty-schedule">
-              <CalendarIcon size={48} className="empty-icon" />
-              <h3>Free Day!</h3>
-              <p>You don't have any classes scheduled for this day.</p>
-            </div>
+            <>
+              <div className="day-header">
+                <h2>{activeDay === 'All' ? 'All Classes' : `${activeDay}'s Classes`}</h2>
+                <div className="total-classes">
+                  {filteredSchedule.length} {filteredSchedule.length === 1 ? 'Class' : 'Classes'}
+                </div>
+              </div>
+
+              {filteredSchedule.length > 0 ? (
+                <div className="agenda-list">
+                  {filteredSchedule.map((cls) => (
+                    <div className="agenda-card" key={cls.id}>
+                      <div className="agenda-time-column">
+                        {activeDay === 'All' && <span className="day-text">{cls.day}</span>}
+                        <Clock size={16} />
+                        <span className="time-text">{cls.time.split(' - ')[0]}</span>
+                        <span className="time-end">{cls.time.split(' - ')[1]}</span>
+                      </div>
+                      <div className={`agenda-details-column type-${cls.type.toLowerCase()}`}>
+                        <div className="class-type-tag">{cls.type}</div>
+                        <h3 className="subject-name">{cls.subjectCode}: {cls.subjectName}</h3>
+                        
+                        <div className="class-meta">
+                          <div className="meta-item">
+                            <MapPin size={15} />
+                            <span>{cls.room}</span>
+                          </div>
+                          <div className="meta-item">
+                            <User size={15} />
+                            <span>{cls.instructor}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-schedule">
+                  <CalendarIcon size={48} className="empty-icon" />
+                  <h3>Free Day!</h3>
+                  <p>You don't have any classes scheduled for this day.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

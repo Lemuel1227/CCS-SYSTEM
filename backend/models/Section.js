@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 require("./SchoolYearSemester");
+require("./AcademicTrack");
 
 const sectionSchema = new mongoose.Schema(
   {
@@ -20,6 +21,11 @@ const sectionSchema = new mongoose.Schema(
     program: {
       type: String,
       trim: true,
+    },
+    academicTrack: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AcademicTrack",
+      default: null,
     },
     maxStudents: {
       type: Number,

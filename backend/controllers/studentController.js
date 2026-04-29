@@ -1,6 +1,7 @@
 const StudentProfile = require("../models/StudentProfile");
 const User = require("../models/User");
 const Section = require("../models/Section");
+const ClassSchedule = require("../models/ClassSchedule");
 const mongoose = require("mongoose");
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
@@ -281,10 +282,47 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+// @desc    Get current student's schedule
+// @route   GET /api/students/me/schedule
+// @access  Private/Student
+const getMySchedule = async (req, res) => {
+  try {
+    const student = await StudentProfile.findOne({ user: req.user._id })
+      .populate("section");
+    
+    if (!student) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    if (!student.section) {
+      return res.json([]);
+    }
+
+    const schedules = await ClassSchedule.find({ section: student.section._id })
+      .populate("schoolYearSemester", "schoolYear semester isCurrent")
+      .populate("section", "sectionName yearLevel program")
+      .populate("course", "code desc units year sem")
+      .populate("faculty", "firstName middleName lastName employeeIdNumber user")
+      .sort({ dayOfWeek: 1, timeStart: 1 });
+
+    const dayOrder = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 7 };
+    const sorted = schedules.sort((a, b) => {
+      const dayDiff = (dayOrder[a.dayOfWeek] || 99) - (dayOrder[b.dayOfWeek] || 99);
+      if (dayDiff !== 0) return dayDiff;
+      return (a.timeStart || "").localeCompare(b.timeStart || "");
+    });
+
+    res.json(sorted);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   getStudents,
   getStudentById,
   createStudent,
   updateStudent,
   deleteStudent,
+  getMySchedule,
 };

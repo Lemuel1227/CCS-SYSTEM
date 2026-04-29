@@ -5,9 +5,13 @@ const {
   getStudentById,
   createStudent,
   updateStudent,
-  deleteStudent
+  deleteStudent,
+  getMySchedule
 } = require("../controllers/studentController");
 const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
+
+// Student-specific routes (accessible by students)
+router.get("/me/schedule", protect, getMySchedule);
 
 // All routes below require protect and admin
 router.use(protect, adminOrFaculty);

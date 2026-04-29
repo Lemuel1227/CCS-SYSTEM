@@ -4,6 +4,7 @@ const SchoolYearSemester = require("../models/SchoolYearSemester");
 const Section = require("../models/Section");
 const Course = require("../models/Course");
 const FacultyProfile = require("../models/FacultyProfile");
+const AcademicTrack = require("../models/AcademicTrack");
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
@@ -89,7 +90,17 @@ const getClassScheduleOptions = async (req, res) => {
   try {
     const [schoolYears, sections, courses, faculty] = await Promise.all([
       SchoolYearSemester.find().sort({ schoolYear: -1, semester: 1 }),
-      Section.find().populate("schoolYearSemester", "schoolYear semester isCurrent").sort({ sectionName: 1 }),
+      Section.find()
+        .populate("schoolYearSemester", "schoolYear semester isCurrent")
+        .populate({
+          path: "academicTrack",
+          select: "name code courses",
+          populate: {
+            path: "courses",
+            select: "code desc units"
+          }
+        })
+        .sort({ sectionName: 1 }),
       Course.find().sort({ year: 1, sem: 1, code: 1 }),
       FacultyProfile.find().populate("user", "userId name email").sort({ lastName: 1, firstName: 1 }),
     ]);
@@ -101,6 +112,7 @@ const getClassScheduleOptions = async (req, res) => {
       program: section.program,
       schoolYearSemester: section.schoolYearSemester,
       schoolYearLabel: formatSchoolYearLabel(section.schoolYearSemester),
+      academicTrack: section.academicTrack,
     }));
 
     res.json({ schoolYears, sections: sectionOptions, courses, faculty });
@@ -189,6 +201,15 @@ const createClassSchedule = async (req, res) => {
       return res.status(400).json({ message: "Section does not belong to the selected school year/semester" });
     }
 
+    if (sectionDoc.academicTrack) {
+      const track = await AcademicTrack.findById(sectionDoc.academicTrack);
+      if (track && track.courses && track.courses.length > 0) {
+        if (!track.courses.some(c => String(c) === String(course))) {
+          return res.status(400).json({ message: "Course is not in this section's academic track" });
+        }
+      }
+    }
+
     const conflict = await findScheduleConflict({
       schoolYearSemester,
       section,
@@ -263,6 +284,15 @@ const updateClassSchedule = async (req, res) => {
     }
     if (String(sectionDoc.schoolYearSemester) !== String(nextValues.schoolYearSemester)) {
       return res.status(400).json({ message: "Section does not belong to the selected school year/semester" });
+    }
+
+    if (sectionDoc.academicTrack) {
+      const track = await AcademicTrack.findById(sectionDoc.academicTrack);
+      if (track && track.courses && track.courses.length > 0) {
+        if (!track.courses.some(c => String(c) === String(nextValues.course))) {
+          return res.status(400).json({ message: "Course is not in this section's academic track" });
+        }
+      }
     }
 
     const conflict = await findScheduleConflict({

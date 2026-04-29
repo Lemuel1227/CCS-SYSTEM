@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Calendar, Clock, MapPin, Users, BookOpen, Plus, Search, Edit, Trash2, X, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, Search, Edit, Trash2, X, Filter, ChevronDown } from 'lucide-react';
 import './ScheduleManagement.css';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -42,10 +42,12 @@ const ScheduleManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterSchoolYear, setFilterSchoolYear] = useState('All');
   const [filterType, setFilterType] = useState('All');
   const [filterDay, setFilterDay] = useState('All');
   const [sortBy, setSortBy] = useState('time');
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
+  const [expandedSections, setExpandedSections] = useState({});
 
   const mapSchedule = (item) => ({
     id: item._id || item.id,
@@ -111,9 +113,10 @@ const ScheduleManagement = () => {
           schedule.sectionName.toLowerCase().includes(needle) ||
           schedule.roomName.toLowerCase().includes(needle) ||
           schedule.facultyName.toLowerCase().includes(needle);
+        const matchesSchoolYear = filterSchoolYear === 'All' || schedule.schoolYearSemester === filterSchoolYear;
         const matchesType = filterType === 'All' || schedule.scheduleType === filterType;
         const matchesDay = filterDay === 'All' || schedule.dayOfWeek === filterDay;
-        return matchesSearch && matchesType && matchesDay;
+        return matchesSearch && matchesSchoolYear && matchesType && matchesDay;
       })
       .sort((a, b) => {
         if (sortBy === 'time') {
@@ -126,11 +129,44 @@ const ScheduleManagement = () => {
         if (sortBy === 'room_asc') return a.roomName.localeCompare(b.roomName);
         return 0;
       });
-  }, [schedules, searchTerm, filterType, filterDay, sortBy]);
+  }, [schedules, searchTerm, filterSchoolYear, filterType, filterDay, sortBy]);
+
+  const groupedSchedules = useMemo(() => {
+    const groups = {};
+    filteredSchedules.forEach((schedule) => {
+      const sectionKey = schedule.section || 'Unassigned';
+      if (!groups[sectionKey]) {
+        const section = sectionOptions.find((s) => s._id === schedule.section);
+        groups[sectionKey] = {
+          sectionId: schedule.section,
+          sectionName: schedule.sectionName || 'Unassigned',
+          sectionYearLevel: schedule.sectionYearLevel,
+          schoolYearLabel: section?.schoolYearLabel || schedule.schoolYearLabel,
+          schedules: [],
+        };
+      }
+      groups[sectionKey].schedules.push(schedule);
+    });
+    return Object.values(groups).sort((a, b) => a.sectionName.localeCompare(b.sectionName));
+  }, [filteredSchedules, sectionOptions]);
 
   const openCreateModal = () => {
     setEditingSchedule(null);
     setFormData(DEFAULT_FORM_DATA);
+    setIsModalOpen(true);
+  };
+
+  const openScheduleForCourse = (sectionId, courseId) => {
+    const section = sectionOptions.find((s) => s._id === sectionId);
+    if (!section) return;
+
+    setEditingSchedule(null);
+    setFormData({
+      ...DEFAULT_FORM_DATA,
+      schoolYearSemester: section.schoolYearSemester?._id || section.schoolYearSemester || '',
+      section: sectionId,
+      course: courseId,
+    });
     setIsModalOpen(true);
   };
 
@@ -153,6 +189,13 @@ const ScheduleManagement = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingSchedule(null);
+  };
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
   };
 
   const handleInputChange = (e) => {
@@ -193,6 +236,28 @@ const ScheduleManagement = () => {
     }
   };
 
+  const filteredCourseOptions = useMemo(() => {
+    if (!formData.section) return courseOptions;
+    const selectedSection = sectionOptions.find((s) => s._id === formData.section);
+    if (!selectedSection || !selectedSection.academicTrack) return courseOptions;
+    const trackCourseIds = selectedSection.academicTrack.courses?.map(c => typeof c === 'object' ? c._id : c) || [];
+    if (trackCourseIds.length === 0) return courseOptions;
+    return courseOptions.filter((course) => trackCourseIds.includes(course._id));
+  }, [formData.section, sectionOptions, courseOptions]);
+
+  const getUnscheduledCourses = (sectionId) => {
+    const section = sectionOptions.find((s) => s._id === sectionId);
+    if (!section || !section.academicTrack) return [];
+    
+    const trackCourseIds = section.academicTrack.courses?.map(c => typeof c === 'object' ? c._id : c) || [];
+    const scheduledCourseIds = schedules
+      .filter((s) => s.section === sectionId)
+      .map((s) => s.course);
+    
+    const unscheduledIds = trackCourseIds.filter((id) => !scheduledCourseIds.includes(id));
+    return courseOptions.filter((course) => unscheduledIds.includes(course._id));
+  };
+
   const filteredSectionOptions = sectionOptions.filter(
     (section) => !formData.schoolYearSemester || section.schoolYearSemester?._id === formData.schoolYearSemester
   );
@@ -231,6 +296,18 @@ const ScheduleManagement = () => {
         </div>
         <div className="filter-sort-controls">
           <div className="control-group">
+            <Calendar size={16} className="control-icon" />
+            <select value={filterSchoolYear} onChange={(e) => setFilterSchoolYear(e.target.value)} className="control-select">
+              <option value="All">All School Years</option>
+              {schoolYearOptions.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {formatSchoolYearLabel(item)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="control-group">
             <Filter size={16} className="control-icon" />
             <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="control-select">
               <option value="All">All Types</option>
@@ -265,52 +342,106 @@ const ScheduleManagement = () => {
           <div className="sm-empty-state">No class schedules found.</div>
         )}
 
-        {filteredSchedules.map((schedule) => (
-          <div className="schedule-card" key={schedule.id}>
-            <div className="schedule-card-header">
-              <div className="course-code">{schedule.courseCode || 'N/A'}</div>
-              <div className="schedule-badges">
-                <div className={`purpose-badge ${schedule.scheduleType.toLowerCase()}`}>{schedule.scheduleType}</div>
-                <div className="section-badge">{schedule.sectionName}</div>
+        {groupedSchedules.map((group) => (
+          <div key={group.sectionId || 'unassigned'} className="schedule-section-group">
+            <div 
+              className="schedule-section-header"
+              onClick={() => toggleSection(group.sectionId || 'unassigned')}
+              style={{ cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                <ChevronDown 
+                  size={20} 
+                  className={`section-chevron ${expandedSections[group.sectionId || 'unassigned'] ? 'expanded' : ''}`}
+                />
+                <div>
+                  <h3 className="section-group-title">{group.sectionName}</h3>
+                  <p className="section-group-subtitle">
+                    {group.sectionYearLevel && `Year Level: ${group.sectionYearLevel}`}
+                    {group.sectionYearLevel && group.schoolYearLabel && ' • '}
+                    {group.schoolYearLabel}
+                  </p>
+                </div>
+              </div>
+              <div className="section-schedule-count">
+                {group.schedules.length} schedule{group.schedules.length !== 1 ? 's' : ''}
+                {group.sectionId && (() => {
+                  const unscheduledCourses = getUnscheduledCourses(group.sectionId);
+                  if (unscheduledCourses.length === 0) return null;
+                  return <span> | {unscheduledCourses.length} unscheduled courses</span>;
+                })()}
               </div>
             </div>
-            <h3 className="subject-title">{schedule.subject || 'Untitled Course'}</h3>
+            {expandedSections[group.sectionId || 'unassigned'] && (
+              <div className="schedules-container">
+                {group.sectionId && (() => {
+                  const unscheduledCourses = getUnscheduledCourses(group.sectionId);
+                  if (unscheduledCourses.length === 0) return null;
+                  return (
+                    <div className="unscheduled-courses-section">
+                      <h4 className="unscheduled-title">Unscheduled Courses ({unscheduledCourses.length})</h4>
+                      <div className="unscheduled-courses-list">
+                        {unscheduledCourses.map((course) => (
+                          <div 
+                            key={course._id} 
+                            className="unscheduled-course-item clickable"
+                            onClick={() => openScheduleForCourse(group.sectionId, course._id)}
+                          >
+                            <span className="unscheduled-course-code">{course.code}</span>
+                            <span className="unscheduled-course-desc">{course.desc}</span>
+                            <Plus size={14} className="add-icon" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {group.schedules.map((schedule) => (
+                  <div className="schedule-card" key={schedule.id}>
+                    <div className="schedule-card-header">
+                      <div className="course-code">{schedule.courseCode || 'N/A'}</div>
+                      <div className="schedule-badges">
+                        <div className={`purpose-badge ${schedule.scheduleType.toLowerCase()}`}>{schedule.scheduleType}</div>
+                      </div>
+                    </div>
+                    <h3 className="subject-title">{schedule.subject || 'Untitled Course'}</h3>
 
-            <div className="schedule-details">
-              <div className="detail-item">
-                <Calendar size={16} />
-                <span>
-                  {schedule.dayOfWeek} {schedule.schoolYearLabel ? `• ${schedule.schoolYearLabel}` : ''}
-                </span>
-              </div>
-              <div className="detail-item">
-                <Clock size={16} />
-                <span>
-                  {schedule.timeStart} - {schedule.timeEnd}
-                </span>
-              </div>
-              <div className="detail-item">
-                <MapPin size={16} />
-                <span>{schedule.roomName}</span>
-              </div>
-              <div className="detail-item">
-                <Users size={16} />
-                <span>{schedule.facultyName}</span>
-              </div>
-              <div className="detail-item">
-                <BookOpen size={16} />
-                <span>{schedule.sectionYearLevel ? `${schedule.sectionYearLevel} • ` : ''}{schedule.sectionName}</span>
-              </div>
-            </div>
+                    <div className="schedule-details">
+                      <div className="detail-item">
+                        <Calendar size={16} />
+                        <span>
+                          {schedule.dayOfWeek} {schedule.schoolYearLabel ? `• ${schedule.schoolYearLabel}` : ''}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <Clock size={16} />
+                        <span>
+                          {schedule.timeStart} - {schedule.timeEnd}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <MapPin size={16} />
+                        <span>{schedule.roomName}</span>
+                      </div>
+                      <div className="detail-item">
+                        <Users size={16} />
+                        <span>{schedule.facultyName}</span>
+                      </div>
+                    </div>
 
-            <div className="schedule-card-actions">
-              <button className="btn-icon edit" title="Edit" onClick={() => openEditModal(schedule)}>
-                <Edit size={16} />
-              </button>
-              <button className="btn-icon delete" title="Delete" onClick={() => handleDelete(schedule.id)}>
-                <Trash2 size={16} />
-              </button>
-            </div>
+                    <div className="schedule-card-actions">
+                      <button className="btn-icon edit" title="Edit" onClick={() => openEditModal(schedule)}>
+                        <Edit size={16} />
+                      </button>
+                      <button className="btn-icon delete" title="Delete" onClick={() => handleDelete(schedule.id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -361,7 +492,7 @@ const ScheduleManagement = () => {
                   <label>Course</label>
                   <select name="course" value={formData.course} onChange={handleInputChange} required>
                     <option value="">Select course</option>
-                    {courseOptions.map((course) => (
+                    {filteredCourseOptions.map((course) => (
                       <option key={course._id} value={course._id}>
                         {course.code} - {course.desc}
                       </option>

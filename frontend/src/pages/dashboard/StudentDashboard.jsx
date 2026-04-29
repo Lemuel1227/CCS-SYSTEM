@@ -1,7 +1,8 @@
 import React from 'react';
-import { BookOpen, Calendar, Clock, Award, Activity, FileText, ChevronRight, CheckCircle, LayoutDashboard } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Award, Activity, FileText, ChevronRight, CheckCircle, LayoutDashboard, Megaphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
+import AnnouncementsWidget from './AnnouncementsWidget';
 
 const StudentDashboard = () => {
   return (
@@ -51,6 +52,10 @@ const StudentDashboard = () => {
             <h3>None</h3>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginBottom: '24px' }}>
+        <AnnouncementsWidget />
       </div>
 
       <div className="dashboard-content">

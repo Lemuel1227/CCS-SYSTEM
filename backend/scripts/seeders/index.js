@@ -11,6 +11,7 @@ const { seedViolationTypesCore } = require("./violationTypes");
 const { seedViolationsCore } = require("./violations");
 const { seedMedicalRecordsCore } = require("./medicalRecords");
 const { seedClubOrgsCore } = require("./clubOrgs");
+const { seedAnnouncementsCore } = require("./announcements");
 
 const seedAllCore = async ({ reset = false } = {}) => {
   const userMap = await seedUsersCore({ reset });
@@ -25,6 +26,7 @@ const seedAllCore = async ({ reset = false } = {}) => {
   await seedEventsCore({ reset, userMap });
   await seedMedicalRecordsCore({ reset });
   await seedClubOrgsCore({ reset });
+  await seedAnnouncementsCore({ reset, userMap });
 
   console.log("Temp seed completed.");
 };

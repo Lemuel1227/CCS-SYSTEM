@@ -21,36 +21,36 @@ const MyAffiliation = () => {
     }
   ];
 
-  const fetchClubs = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/clubs-orgs', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      // Map API data to component state
-      const orgs = response.data.map(org => ({
-        id: org._id,
-        orgName: org.name,
-        category: org.category,
-        members: org.membersCount || 0,
-        description: org.description,
-        lookingForMembers: org.lookingForMembers,
-        openPositions: org.openPositions
-      }));
-      setExploreOrganizations(orgs);
-    } catch (error) {
-      console.error('Error fetching clubs', error);
-      // Fallback
-      setExploreOrganizations([
-        {
-          id: 'temp1', orgName: 'Cybersecurity Guild', category: 'Academic', members: 45, 
-          description: 'Dedicated to learning about ethical hacking, network security, and participating in CTF competitions.',
-          lookingForMembers: false, openPositions: []
-        }
-      ]);
-    }
-  };
-
   useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/clubs-orgs', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        // Map API data to component state
+        const orgs = response.data.map(org => ({
+          id: org._id,
+          orgName: org.name,
+          category: org.category,
+          members: org.membersCount || 0,
+          description: org.description,
+          lookingForMembers: org.lookingForMembers,
+          openPositions: org.openPositions
+        }));
+        setExploreOrganizations(orgs);
+      } catch (error) {
+        console.error('Error fetching clubs', error);
+        // Fallback
+        setExploreOrganizations([
+          {
+            id: 'temp1', orgName: 'Cybersecurity Guild', category: 'Academic', members: 45, 
+            description: 'Dedicated to learning about ethical hacking, network security, and participating in CTF competitions.',
+            lookingForMembers: false, openPositions: []
+          }
+        ]);
+      }
+    };
+
     fetchClubs();
   }, []);
 

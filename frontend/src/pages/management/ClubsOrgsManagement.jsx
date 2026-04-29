@@ -10,6 +10,8 @@ const DEFAULT_CLUBS = [
 const ClubsOrgsManagement = () => {
   const [clubs, setClubs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('name-asc');
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentClubId, setCurrentClubId] = useState(null);
@@ -135,14 +137,20 @@ const ClubsOrgsManagement = () => {
     }
   };
 
-  const filteredClubs = clubs.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-  };
+  const processedClubs = clubs
+    .filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            c.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === 'All' || c.category === filterCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+      if (sortBy === 'members-desc') return (b.membersCount || 0) - (a.membersCount || 0);
+      if (sortBy === 'members-asc') return (a.membersCount || 0) - (b.membersCount || 0);
+      return 0;
+    });
 
   return (
     <div className="clubs-management-container">
@@ -176,10 +184,26 @@ const ClubsOrgsManagement = () => {
           <input 
             type="text" 
             className="admin-search-input"
-            placeholder="Search by name or category..." 
+            placeholder="Search organizations..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        <div className="admin-filters">
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="admin-filter-select">
+            <option value="All">All Categories</option>
+            <option value="Academic">Academic</option>
+            <option value="Technical">Technical</option>
+            <option value="Sports">Sports</option>
+            <option value="Arts">Arts</option>
+            <option value="General">General</option>
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="admin-filter-select">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="members-desc">Most Members</option>
+            <option value="members-asc">Least Members</option>
+          </select>
         </div>
       </div>
 
@@ -190,60 +214,55 @@ const ClubsOrgsManagement = () => {
         </div>
       ) : (
         <div className="orgs-grid">
-          {filteredClubs.map(club => (
-            <div className="org-card" key={club._id}>
+          {processedClubs.map(club => (
+            <div className="org-card management-org" key={club._id}>
               <div className="org-card-header">
-                <div className="org-avatar-section">
-                  <div className={`org-avatar ${club.category.toLowerCase()}`}>
-                    {getInitials(club.name)}
-                  </div>
-                  <div className="org-name-section">
-                    <h3>{club.name}</h3>
-                    <span className="category-badge">{club.category}</span>
-                  </div>
-                </div>
-                <div className="org-card-actions">
-                  <button className="icon-btn edit" onClick={() => openEditModal(club)}><Edit2 size={16} /></button>
-                  <button className="icon-btn delete" onClick={() => handleDelete(club._id)}><Trash2 size={16} /></button>
-                </div>
+                <h3>{club.name}</h3>
+                <span className={`category-badge`}>{club.category}</span>
               </div>
 
               <div className="org-card-body">
-                <p className="org-desc">{club.description.length > 100 ? `${club.description.substring(0, 100)}...` : club.description}</p>
+                <p className="org-desc">
+                  {club.description.length > 120 ? `${club.description.substring(0, 120)}...` : club.description}
+                </p>
                 
-                <div className="org-meta">
-                  <div className="meta-item">
-                    <Users size={16} />
+                <div className="org-details">
+                  <div className="detail-item">
+                    <Users className="detail-icon" size={16} />
                     <span>{club.membersCount || 0} Members</span>
                   </div>
-                  <div className="meta-item">
-                    <UserPlus size={16} />
+                  <div className="detail-item">
+                    <UserPlus className="detail-icon" size={16} />
                     <span>{club.adviser || 'No Adviser'}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="org-card-footer">
-                <div className={`hiring-status ${club.lookingForMembers ? 'active' : ''}`}>
-                  <div className="status-header">
-                    {club.lookingForMembers ? <CheckCircle2 size={16} /> : <FileText size={16} />}
-                    <span>{club.lookingForMembers ? 'Recruiting' : 'Closed for Hiring'}</span>
+                {club.lookingForMembers && (
+                  <div className="hiring-banner">
+                    <strong>Now Hiring / Looking For:</strong>
+                    <span>
+                      {club.openPositions?.length > 0 ? club.openPositions.join(', ') : 'Members'}
+                    </span>
                   </div>
-                  {club.lookingForMembers && (
-                    <p className="positions-list">
-                      {club.openPositions?.join(', ') || 'Members'}
-                    </p>
-                  )}
-                </div>
+                )}
+              </div>
+              
+              <div className="org-card-footer management-actions">
+                <button className="btn-secondary" onClick={() => openEditModal(club)}>
+                  <Edit2 size={16} /> Edit
+                </button>
+                <button className="btn-danger" onClick={() => handleDelete(club._id)}>
+                  <Trash2 size={16} /> Delete
+                </button>
               </div>
             </div>
           ))}
           
-          {filteredClubs.length === 0 && (
+          {processedClubs.length === 0 && (
             <div className="empty-state">
               <LayoutGrid className="empty-icon" size={48} />
               <h3>No Organizations Found</h3>
-              <p>Could not find any clubs matching your criteria, or no organizations have been created yet.</p>
+              <p>Could not find any clubs matching your filters.</p>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Calendar, BookOpen, Activity, UserPlus, Settings, Clock, AlertTriangle, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
+import AnnouncementsWidget from './AnnouncementsWidget';
 
 const AdminDashboard = () => {
   return (
@@ -51,6 +52,10 @@ const AdminDashboard = () => {
             <h3>5</h3>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginBottom: '24px' }}>
+        <AnnouncementsWidget />
       </div>
 
       <div className="dashboard-content">

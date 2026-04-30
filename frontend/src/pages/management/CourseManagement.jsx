@@ -165,7 +165,7 @@ const CourseManagement = () => {
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15 } }
     }
@@ -173,13 +173,12 @@ const CourseManagement = () => {
 
   const barOptions = {
     responsive: true,
-    maintainAspectRatio: true,
-    indexAxis: 'y',
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom' }
+      legend: { display: false }
     },
     scales: {
-      x: { beginAtZero: true }
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
     }
   };
 
@@ -190,12 +189,8 @@ const CourseManagement = () => {
       return acc;
     }, {});
     return {
-      labels: Object.keys(counts).map(u => `${u} Units`),
-      datasets: [{
-        data: Object.values(counts),
-        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'],
-        borderWidth: 0
-      }]
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
     };
   }, [filteredCourses]);
 
@@ -205,13 +200,8 @@ const CourseManagement = () => {
       return acc;
     }, {});
     return {
-      labels: Object.keys(counts),
-      datasets: [{
-        label: 'Courses by Year',
-        data: Object.values(counts),
-        backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f97316'],
-        borderWidth: 0
-      }]
+      labels: Object.keys(counts).sort(),
+      datasets: [{ label: 'Courses by Year', data: Object.values(counts), backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f97316'], borderWidth: 0 }]
     };
   }, [filteredCourses]);
 
@@ -223,22 +213,20 @@ const CourseManagement = () => {
     }, {});
     return {
       labels: Object.keys(counts),
-      datasets: [{
-        label: 'Courses by Semester',
-        data: Object.values(counts),
-        backgroundColor: ['#06b6d4', '#f59e0b', '#8b5cf6'],
-        borderWidth: 0
-      }]
+      datasets: [{ label: 'Courses by Semester', data: Object.values(counts), backgroundColor: ['#22c55e', '#f59e0b', '#3b82f6'], borderWidth: 0 }]
     };
   }, [filteredCourses]);
 
   const chartStats = useMemo(() => {
+    const yearCounts = filteredCourses.reduce((acc, c) => {
+      acc[`Year ${c.year}`] = (acc[`Year ${c.year}`] || 0) + 1;
+      return acc;
+    }, {});
     return {
       total: filteredCourses.length,
       totalUnits: filteredCourses.reduce((sum, c) => sum + c.units, 0),
-      avgUnits: filteredCourses.length > 0 ? (filteredCourses.reduce((sum, c) => sum + c.units, 0) / filteredCourses.length).toFixed(2) : 0,
-      years: new Set(filteredCourses.map(c => c.year)).size,
-      avgPerYear: Math.round(filteredCourses.length / new Set(filteredCourses.map(c => c.year)).size)
+      avgUnits: filteredCourses.length > 0 ? (filteredCourses.reduce((sum, c) => sum + c.units, 0) / filteredCourses.length).toFixed(1) : 0,
+      years: Object.keys(yearCounts).length
     };
   }, [filteredCourses]);
 
@@ -594,10 +582,6 @@ const CourseManagement = () => {
                     <div className="preview-stat-item">
                       <span className="preview-stat-label">Year Levels</span>
                       <span className="preview-stat-value">{chartStats.years}</span>
-                    </div>
-                    <div className="preview-stat-item">
-                      <span className="preview-stat-label">Avg Courses/Year</span>
-                      <span className="preview-stat-value">{chartStats.avgPerYear}</span>
                     </div>
                   </div>
                 </div>

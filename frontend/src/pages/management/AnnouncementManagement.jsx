@@ -9,7 +9,7 @@ const AnnouncementManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [existingImageName, setExistingImageName] = useState(null);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -41,9 +41,10 @@ const AnnouncementManagement = () => {
 
   const handleOpenModal = (announcement = null) => {
     setSelectedFile(null);
+    setExistingImageName(null);
     if (announcement) {
       setCurrentAnnouncement(announcement);
-      setPreviewUrl(announcement.image ? `http://localhost:5000${announcement.image}` : null);
+      setExistingImageName(announcement.image || null);
       setFormData({
         title: announcement.title,
         content: announcement.content,
@@ -51,7 +52,6 @@ const AnnouncementManagement = () => {
       });
     } else {
       setCurrentAnnouncement(null);
-      setPreviewUrl(null);
       setFormData({
         title: '',
         content: '',
@@ -65,7 +65,7 @@ const AnnouncementManagement = () => {
     setIsModalOpen(false);
     setCurrentAnnouncement(null);
     setSelectedFile(null);
-    setPreviewUrl(null);
+    setExistingImageName(null);
   };
 
   const handleChange = (e) => {
@@ -81,13 +81,12 @@ const AnnouncementManagement = () => {
         return;
       }
       setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
   const removeSelectedFile = () => {
     setSelectedFile(null);
-    setPreviewUrl(null);
+    setExistingImageName(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -96,23 +95,23 @@ const AnnouncementManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = new FormData();
-      data.append('title', formData.title);
-      data.append('content', formData.content);
-      data.append('status', formData.status);
+      const data = {
+        title: formData.title,
+        content: formData.content,
+        status: formData.status,
+      };
       
       if (selectedFile) {
-        data.append('image', selectedFile);
+        data.image = selectedFile.name;
+      } else if (currentAnnouncement?.image && !existingImageName) {
+        // If file was removed, set image to null
+        data.image = null;
       }
 
       if (currentAnnouncement) {
-        await axios.put(`/api/announcements/${currentAnnouncement._id || currentAnnouncement.id}`, data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await axios.put(`/api/announcements/${currentAnnouncement._id || currentAnnouncement.id}`, data);
       } else {
-        await axios.post('/api/announcements', data, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await axios.post('/api/announcements', data);
       }
       
       // Manually trigger a localized fetch right after since the use-effect 
@@ -263,8 +262,8 @@ const AnnouncementManagement = () => {
 
               <div className="form-group">
                 <label>Attachment Image (Optional)</label>
-                <div className={`file-upload-area ${previewUrl ? 'has-file' : ''}`}>
-                  {!previewUrl && (
+                <div className={`file-upload-area ${selectedFile || existingImageName ? 'has-file' : ''}`}>
+                  {!selectedFile && !existingImageName && (
                     <input
                       type="file"
                       accept="image/*"
@@ -274,22 +273,15 @@ const AnnouncementManagement = () => {
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 5 }}
                     />
                   )}
-                  {previewUrl ? (
+                  {selectedFile || existingImageName ? (
                     <div className="upload-placeholder" style={{ zIndex: 10, position: 'relative' }}>
                       <div className="upload-icon-wrapper" style={{ background: 'rgba(21, 128, 61, 0.1)', color: '#15803d' }}>
                         <ImageIcon size={24} />
                       </div>
                       <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all', padding: '0 16px', textAlign: 'center' }}>
-                        {selectedFile ? selectedFile.name : 'Existing Image Attached'}
+                        {selectedFile ? selectedFile.name : existingImageName || 'Existing Image Attached'}
                       </span>
                       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                        <button 
-                          type="button" 
-                          onClick={() => window.open(previewUrl, '_blank')}
-                          style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
-                        >
-                          View Image
-                        </button>
                         <button 
                           type="button" 
                           onClick={removeSelectedFile}

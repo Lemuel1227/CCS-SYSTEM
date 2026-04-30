@@ -115,17 +115,10 @@ const MedicalRecordsManagement = () => {
     try {
       const docId = doc?._id || doc?.id;
       if (!selectedRecordId || !docId) return;
-      const response = await axios.get(`/api/medical-records/${selectedRecordId}/documents/${docId}/download`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.download = doc.fileName || 'medical-document';
-      window.document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const response = await axios.get(`/api/medical-records/${selectedRecordId}/documents/${docId}/download`);
+      // Backend now returns { fileName: "..." } instead of the actual file
+      // Since we only store the name, we can't download the actual file
+      alert(`File name: ${response.data.fileName}\n\nNote: Only the file name is stored. The actual file is not saved on the server.`);
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Failed to download document.');
     }
@@ -463,7 +456,7 @@ const MedicalRecordsManagement = () => {
                         <FileText size={20} className="doc-icon" />
                         <div className="doc-details">
                           <span className="doc-name">{doc.fileName}</span>
-                          <span className="doc-meta">{doc.uploadDate} • {doc.fileSize}</span>
+                          <span className="doc-meta">{doc.uploadDate}</span>
                         </div>
                       </div>
                       <button className="doc-download-btn" title="Download" onClick={() => handleDownloadDocument(doc)}>

@@ -148,14 +148,11 @@ const MyMedicalRecords = () => {
 
     try {
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
+      const data = {
+        fileName: file.name
+      };
       
-      const response = await axios.post('/api/medical-records/me/documents', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post('/api/medical-records/me/documents', data);
       setRecord(normalizeMedicalRecord(response.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to upload document.');
@@ -182,17 +179,10 @@ const MyMedicalRecords = () => {
     try {
       const docId = doc?._id || doc?.id;
       if (!docId) return;
-      const response = await axios.get(`/api/medical-records/me/documents/${docId}/download`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.download = doc.fileName || 'medical-document';
-      window.document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const response = await axios.get(`/api/medical-records/me/documents/${docId}/download`);
+      // Backend now returns { fileName: "..." } instead of the actual file
+      // Since we only store the name, we can't download the actual file
+      alert(`File name: ${response.data.fileName}\n\nNote: Only the file name is stored. The actual file is not saved on the server.`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to download document.');
     }
@@ -437,21 +427,18 @@ const MyMedicalRecords = () => {
                         <FileText size={18} className="doc-icon" />
                         <div className="doc-details">
                           <span className="doc-name">{doc.fileName}</span>
-                          <span className="doc-meta">{doc.uploadDate} • {doc.fileSize}</span>
+                          <span className="doc-meta">{doc.uploadDate}</span>
                         </div>
                       </div>
                       <div className="doc-actions">
-                          {!isCleared && (
-                            <button className="doc-action-btn delete" onClick={() => handleDeleteDocument(doc.id)} title="Delete">
-                              <Trash2 size={14} />
-                            </button>
-                          )}
                         <button className="doc-action-btn" onClick={() => handleDownloadDocument(doc)} title="Download">
                           <Download size={16} />
                         </button>
-                        <button className="doc-action-btn delete" onClick={() => handleDeleteDocument(doc._id || doc.id)} title="Delete">
-                          <Trash2 size={16} />
-                        </button>
+                        {!isCleared && (
+                          <button className="doc-action-btn delete" onClick={() => handleDeleteDocument(doc._id || doc.id)} title="Delete">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

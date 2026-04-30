@@ -45,10 +45,6 @@ const FacultyDashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginBottom: '24px' }}>
-        <AnnouncementsWidget />
-      </div>
-
       <div className="dashboard-content">
         <div className="dashboard-card">
           <h2><CalendarCheck size={20} /> Today's Schedule</h2>
@@ -122,6 +118,10 @@ const FacultyDashboard = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginTop: '24px' }}>
+        <AnnouncementsWidget />
       </div>
     </div>
   );

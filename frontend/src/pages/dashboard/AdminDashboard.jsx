@@ -54,10 +54,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginBottom: '24px' }}>
-        <AnnouncementsWidget />
-      </div>
-
       <div className="dashboard-content">
         <div className="dashboard-card">
           <h2><Activity size={20} /> Recent Activities</h2>
@@ -129,6 +125,10 @@ const AdminDashboard = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content" style={{ gridTemplateColumns: 'repeat(1, 1fr)', marginTop: '24px' }}>
+        <AnnouncementsWidget />
       </div>
     </div>
   );

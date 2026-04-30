@@ -1,8 +1,6 @@
 const MedicalRecord = require("../models/MedicalRecord");
 const StudentProfile = require("../models/StudentProfile");
 const Event = require("../models/Event");
-const fs = require("fs");
-const path = require("path");
 
 const ALLOWED_STATUSES = ["Cleared", "Pending Review", "Needs Update"];
 const ALLOWED_SCOPES = ["Standalone", "Event Requirement"];
@@ -42,11 +40,7 @@ const normalizeDocument = (document) => {
 
   return {
     fileName,
-    storedFileName: normalizeText(document.storedFileName) || "",
-    filePath: normalizeText(document.filePath) || "",
-    mimeType: normalizeText(document.mimeType) || "",
     uploadDate: normalizeText(document.uploadDate) || new Date().toISOString().split("T")[0],
-    fileSize: normalizeText(document.fileSize) || "",
   };
 };
 
@@ -64,27 +58,6 @@ const buildHistoryEntry = ({ checkupDate, conditions, bloodType, status, documen
   documentAttached: normalizeText(documentAttached) || "None",
 });
 
-const toPublicFilePath = (absolutePath) => {
-  if (!absolutePath) return "";
-  const backendRoot = path.join(__dirname, "..");
-  const relative = path.relative(backendRoot, absolutePath);
-  return relative.split(path.sep).join("/");
-};
-
-const resolveStoredPath = (filePathValue) => {
-  if (!filePathValue) return null;
-  const backendRoot = path.join(__dirname, "..");
-  const normalized = String(filePathValue).replaceAll("\\", "/");
-  return path.join(backendRoot, normalized);
-};
-
-const safeUnlink = (filePathValue) => {
-  const resolved = resolveStoredPath(filePathValue);
-  if (!resolved) return;
-  if (fs.existsSync(resolved)) {
-    fs.unlinkSync(resolved);
-  }
-};
 
 const buildProfileIdentity = async (user) => {
   const studentProfile = await StudentProfile.findOne({ user: user._id });
@@ -212,9 +185,6 @@ const deleteMedicalRecord = async (req, res) => {
       return res.status(404).json({ message: "Medical record not found" });
     }
 
-    for (const doc of record.documents || []) {
-      safeUnlink(doc.filePath);
-    }
 
     await record.deleteOne();
 
@@ -290,20 +260,10 @@ const updateMyMedicalRecord = async (req, res) => {
       return res.status(400).json({ message: "An event is required for event-based medical records" });
     }
 
-    if (
-      body.fileName !== undefined ||
-      body.storedFileName !== undefined ||
-      body.filePath !== undefined ||
-      body.mimeType !== undefined ||
-      body.fileSize !== undefined
-    ) {
+    if (body.fileName !== undefined) {
       const document = normalizeDocument({
         fileName: body.fileName,
-        storedFileName: body.storedFileName,
-        filePath: body.filePath,
-        mimeType: body.mimeType,
         uploadDate: body.uploadDate || new Date().toISOString().split("T")[0],
-        fileSize: body.fileSize,
       });
 
       if (document) {
@@ -333,8 +293,9 @@ const updateMyMedicalRecord = async (req, res) => {
 
 const addMyMedicalDocument = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file provided" });
+    const fileName = req.body.fileName || req.body.file;
+    if (!fileName) {
+      return res.status(400).json({ message: "No file name provided" });
     }
 
     const { studentId } = await buildProfileIdentity(req.user);
@@ -345,18 +306,13 @@ const addMyMedicalDocument = async (req, res) => {
     }
 
     const document = normalizeDocument({
-      fileName: req.file.originalname,
-      storedFileName: req.file.filename,
-      filePath: toPublicFilePath(req.file.path),
-      mimeType: req.file.mimetype,
+      fileName: fileName,
       uploadDate: new Date().toISOString().split("T")[0],
-      fileSize: `${(req.file.size / 1024).toFixed(2)} KB`,
     });
 
     if (!document) {
-      safeUnlink(req.file.path);
       return res.status(400).json({
-        message: "Invalid file",
+        message: "Invalid file name",
       });
     }
 
@@ -365,9 +321,6 @@ const addMyMedicalDocument = async (req, res) => {
     await updated.populate("event", "title date time location status");
     res.json(formatRecord(updated));
   } catch (error) {
-    if (req.file) {
-      safeUnlink(req.file.path);
-    }
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -386,7 +339,6 @@ const deleteMyMedicalDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    safeUnlink(targetDoc.filePath);
     record.documents = record.documents.filter((doc) => String(doc._id) !== req.params.documentId);
     const updated = await record.save();
     await updated.populate("event", "title date time location status");
@@ -410,12 +362,8 @@ const downloadMyMedicalDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    const resolvedPath = resolveStoredPath(document.filePath);
-    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
-      return res.status(404).json({ message: "Document file missing on server" });
-    }
-
-    return res.download(resolvedPath, document.fileName || document.storedFileName || "document");
+    // Since we only store the file name, return it as JSON
+    return res.json({ fileName: document.fileName });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -433,12 +381,8 @@ const downloadMedicalRecordDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    const resolvedPath = resolveStoredPath(document.filePath);
-    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
-      return res.status(404).json({ message: "Document file missing on server" });
-    }
-
-    return res.download(resolvedPath, document.fileName || document.storedFileName || "document");
+    // Since we only store the file name, return it as JSON
+    return res.json({ fileName: document.fileName });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }

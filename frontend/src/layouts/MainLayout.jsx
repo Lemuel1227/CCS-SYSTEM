@@ -23,7 +23,8 @@ import {
   Clock,
   Bell,
   Megaphone,
-  Flag
+  Flag,
+  FileText
 } from 'lucide-react';
 import './MainLayout.css';
 import logo from '../assets/ccs-logo.png';
@@ -42,6 +43,7 @@ const ROLE_MENUS = {
   ],
   faculty: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'Reports', path: '/reports', icon: FileText },
     { title: 'Schedule Management', path: '/schedule-management', icon: Clock },
     { title: 'School Year & Sections', path: '/school-year-sections', icon: CalendarRange },
     { title: 'My Schedule', path: '/my-schedule', icon: Clock },
@@ -57,6 +59,7 @@ const ROLE_MENUS = {
   ],
   admin: [
     { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { title: 'Reports', path: '/reports', icon: FileText },
     { title: 'Faculty Management', path: '/faculty-management', icon: User },
     { title: 'Schedule Management', path: '/schedule-management', icon: Clock },
     { title: 'School Year & Sections', path: '/school-year-sections', icon: CalendarRange },

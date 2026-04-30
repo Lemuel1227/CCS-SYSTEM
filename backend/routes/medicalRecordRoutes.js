@@ -14,11 +14,10 @@ const {
   downloadMedicalRecordDocument,
 } = require("../controllers/medicalRecordController");
 const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
-const { medicalUpload } = require("../middlewares/uploadMiddleware");
 
 router.get("/me", protect, getMyMedicalRecord);
 router.put("/me", protect, updateMyMedicalRecord);
-router.post("/me/documents", protect, medicalUpload.single("file"), addMyMedicalDocument);
+router.post("/me/documents", protect, addMyMedicalDocument);
 router.delete("/me/documents/:documentId", protect, deleteMyMedicalDocument);
 router.get("/me/documents/:documentId/download", protect, downloadMyMedicalDocument);
 

@@ -25,6 +25,7 @@ import AchievementManagement from './pages/management/AchievementManagement'
 import AnnouncementManagement from './pages/management/AnnouncementManagement'
 import ClubsOrgsManagement from './pages/management/ClubsOrgsManagement'
 import SchoolYearSectionManagement from './pages/management/SchoolYearSectionManagement'
+import ReportsPage from './pages/management/ReportsPage'
 import SessionGuard from './components/SessionGuard'
 import ForceSignoutGuard from './components/ForceSignoutGuard'
 import './App.css'
@@ -123,6 +124,7 @@ function App() {
             <Route path="/profile" element={<MyProfile />} />
             
             {/* Faculty & Admin Routes */}
+            <Route path="/reports" element={<ReportsPage userRole={userRole} />} />
             <Route path="/course-management" element={<CourseManagement />} />
             <Route path="/schedule-management" element={<ScheduleManagement />} />
             <Route path="/student-management" element={<StudentManagement />} />

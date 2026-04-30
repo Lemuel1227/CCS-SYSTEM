@@ -35,19 +35,13 @@ const createAnnouncement = async (req, res) => {
     return res.status(403).json({ message: "Not authorized to create announcements" });
   }
 
-  const { title, content, status } = req.body;
-  let image = null;
-
-  if (req.file) {
-    // Generate URL path explicitly matching static route
-    image = `/uploads/announcements/${req.file.filename}`;
-  }
+  const { title, content, status, image } = req.body;
 
   try {
     const announcement = new Announcement({
       title,
       content,
-      image,
+      image: image || null,
       status: status || "Draft",
       author: req.user._id,
       postedAt: status === "Posted" ? Date.now() : null,
@@ -73,7 +67,7 @@ const updateAnnouncement = async (req, res) => {
     return res.status(403).json({ message: "Not authorized to update announcements" });
   }
 
-  const { title, content, status } = req.body;
+  const { title, content, status, image } = req.body;
 
   try {
     const announcement = await Announcement.findById(req.params.id);
@@ -90,8 +84,8 @@ const updateAnnouncement = async (req, res) => {
     announcement.title = title || announcement.title;
     announcement.content = content || announcement.content;
     
-    if (req.file) {
-      announcement.image = `/uploads/announcements/${req.file.filename}`;
+    if (image !== undefined) {
+      announcement.image = image;
     }
 
     if (status && status !== announcement.status) {
@@ -106,6 +100,7 @@ const updateAnnouncement = async (req, res) => {
 
     res.json(updatedAnnouncement);
   } catch (error) {
+    console.error("UPDATE Announcement Error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

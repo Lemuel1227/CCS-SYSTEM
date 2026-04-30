@@ -1,7 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Search, Plus, Edit2, Trash2, X, BookOpen } from 'lucide-react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Search, Plus, Edit2, Trash2, X, BookOpen, Download, ChevronDown, BarChart3, PieChart, FileText } from 'lucide-react';
 import axios from 'axios';
 import './CourseManagement.css';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+} from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 const DEFAULT_COURSES = [
   { id: '1', code: 'CCS101', desc: 'Introduction to Computing', units: 3, prereq: '--', year: 1, sem: 1 },
@@ -39,6 +55,12 @@ const CourseManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewFormat, setPreviewFormat] = useState(null);
+  const [yearFilter, setYearFilter] = useState('All');
+  const [semesterFilter, setSemesterFilter] = useState('All');
+  const exportMenuRef = useRef(null);
 
   const [formData, setFormData] = useState({
     code: '',
@@ -128,14 +150,199 @@ const CourseManagement = () => {
     setEditingCourse(null);
   };
 
-  const filteredCourses = courses.filter(c => 
-    c.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.desc.toLowerCase().includes(searchQuery.toLowerCase())
-  ).sort((a, b) => {
+  // Filter courses early so it can be used in useMemo dependencies
+  const filteredCourses = courses.filter(c => {
+    const matchSearch = c.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                       c.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchYear = yearFilter === 'All' || c.year === parseInt(yearFilter);
+    const matchSemester = semesterFilter === 'All' || c.sem === parseInt(semesterFilter);
+    return matchSearch && matchYear && matchSemester;
+  }).sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year;
     if (a.sem !== b.sem) return a.sem - b.sem;
     return a.code.localeCompare(b.code);
   });
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15 } }
+    }
+  };
+
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    indexAxis: 'y',
+    plugins: {
+      legend: { position: 'bottom' }
+    },
+    scales: {
+      x: { beginAtZero: true }
+    }
+  };
+
+  // Chart data calculations
+  const unitsChartData = useMemo(() => {
+    const counts = filteredCourses.reduce((acc, c) => {
+      acc[c.units] = (acc[c.units] || 0) + 1;
+      return acc;
+    }, {});
+    return {
+      labels: Object.keys(counts).map(u => `${u} Units`),
+      datasets: [{
+        data: Object.values(counts),
+        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'],
+        borderWidth: 0
+      }]
+    };
+  }, [filteredCourses]);
+
+  const yearChartData = useMemo(() => {
+    const counts = filteredCourses.reduce((acc, c) => {
+      acc[`Year ${c.year}`] = (acc[`Year ${c.year}`] || 0) + 1;
+      return acc;
+    }, {});
+    return {
+      labels: Object.keys(counts),
+      datasets: [{
+        label: 'Courses by Year',
+        data: Object.values(counts),
+        backgroundColor: ['#6366f1', '#ec4899', '#14b8a6', '#f97316'],
+        borderWidth: 0
+      }]
+    };
+  }, [filteredCourses]);
+
+  const semesterChartData = useMemo(() => {
+    const counts = filteredCourses.reduce((acc, c) => {
+      const semLabel = c.sem === 1 ? '1st Sem' : c.sem === 2 ? '2nd Sem' : 'Summer';
+      acc[semLabel] = (acc[semLabel] || 0) + 1;
+      return acc;
+    }, {});
+    return {
+      labels: Object.keys(counts),
+      datasets: [{
+        label: 'Courses by Semester',
+        data: Object.values(counts),
+        backgroundColor: ['#06b6d4', '#f59e0b', '#8b5cf6'],
+        borderWidth: 0
+      }]
+    };
+  }, [filteredCourses]);
+
+  const chartStats = useMemo(() => {
+    return {
+      total: filteredCourses.length,
+      totalUnits: filteredCourses.reduce((sum, c) => sum + c.units, 0),
+      avgUnits: filteredCourses.length > 0 ? (filteredCourses.reduce((sum, c) => sum + c.units, 0) / filteredCourses.length).toFixed(2) : 0,
+      years: new Set(filteredCourses.map(c => c.year)).size,
+      avgPerYear: Math.round(filteredCourses.length / new Set(filteredCourses.map(c => c.year)).size)
+    };
+  }, [filteredCourses]);
+
+  const openPreviewModal = (format) => {
+    setPreviewFormat(format);
+    setIsPreviewModalOpen(true);
+    setShowExportMenu(false);
+  };
+
+  const closePreviewModal = () => {
+    setIsPreviewModalOpen(false);
+    setPreviewFormat(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const generatePDFReport = () => {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.text('Course Management Report', pageWidth / 2, 15, { align: 'center' });
+
+    doc.setFontSize(10);
+    const dateStr = new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+    doc.text(`Generated on: ${dateStr}`, pageWidth / 2, 22, { align: 'center' });
+
+    const filters = [];
+    if (yearFilter !== 'All') filters.push(`Year: ${yearFilter}`);
+    if (semesterFilter !== 'All') filters.push(`Semester: ${semesterFilter}`);
+    if (searchQuery) filters.push(`Search: "${searchQuery}"`);
+
+    if (filters.length > 0) {
+      doc.setFontSize(9);
+      doc.text(`Filters: ${filters.join(' | ')}`, 14, 28);
+    }
+
+    const tableData = filteredCourses.map(c => [
+      c.code,
+      c.desc,
+      c.units,
+      c.prereq,
+      `Year ${c.year}`,
+      c.sem === 1 ? '1st Sem' : c.sem === 2 ? '2nd Sem' : 'Summer'
+    ]);
+
+    autoTable(doc, {
+      head: [['Course Code', 'Description', 'Units', 'Prerequisites', 'Year', 'Semester']],
+      body: tableData,
+      startY: filters.length > 0 ? 32 : 28,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [41, 98, 255], textColor: 255, fontSize: 9 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 15 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 20 }
+      }
+    });
+
+    doc.setFontSize(9);
+    const finalY = doc.lastAutoTable?.finalY || 40;
+    doc.text(`Total Records: ${filteredCourses.length} | Total Units: ${chartStats.totalUnits}`, 14, finalY + 8);
+
+    doc.save(`course_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    closePreviewModal();
+  };
+
+  const generateExcelReport = () => {
+    const data = filteredCourses.map(c => ({
+      'Course Code': c.code,
+      'Description': c.desc,
+      'Units': c.units,
+      'Prerequisites': c.prereq,
+      'Year Level': `Year ${c.year}`,
+      'Semester': c.sem === 1 ? '1st Semester' : c.sem === 2 ? '2nd Semester' : 'Summer'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    const colWidths = [
+      { wch: 15 }, { wch: 50 }, { wch: 10 }, { wch: 30 }, { wch: 15 }, { wch: 15 }
+    ];
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Course Report');
+
+    XLSX.writeFile(wb, `course_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    closePreviewModal();
+  };
 
   return (
     <div className="course-management-container">
@@ -148,10 +355,34 @@ const CourseManagement = () => {
           </div>
           <p>Manage academic courses, prerequisites, and curriculum scheduling.</p>
         </div>
-        <button className="add-btn" onClick={() => openModal()}>
-          <Plus size={20} />
-          Add Course
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="export-dropdown" ref={exportMenuRef}>
+            <button 
+              className="export-btn" 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              <Download size={18} />
+              Export Report
+              <ChevronDown size={16} />
+            </button>
+            {showExportMenu && (
+              <div className="export-menu">
+                <button onClick={() => openPreviewModal('pdf')} className="export-option">
+                  <FileText size={16} />
+                  Preview & Export PDF
+                </button>
+                <button onClick={() => openPreviewModal('excel')} className="export-option">
+                  <FileText size={16} />
+                  Preview & Export Excel
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
+            <Plus size={20} />
+            Add Course
+          </button>
+        </div>
       </div>
 
       <div className="controls-bar">
@@ -163,6 +394,29 @@ const CourseManagement = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <select 
+            value={yearFilter} 
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="All">All Years</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+          <select 
+            value={semesterFilter} 
+            onChange={(e) => setSemesterFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="All">All Semesters</option>
+            <option value="1">1st Semester</option>
+            <option value="2">2nd Semester</option>
+            <option value="3">Summer</option>
+          </select>
         </div>
       </div>
 
@@ -193,11 +447,11 @@ const CourseManagement = () => {
                   <td>{course.prereq}</td>
                   <td>Year {course.year}</td>
                   <td>Sem {course.sem}</td>
-                  <td className="actions-cell">
-                    <button className="action-btn edit" onClick={() => openModal(course)} title="Edit">
+                  <td className="cm-actions-cell">
+                    <button className="cm-action-btn edit" onClick={() => openModal(course)} title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button className="action-btn delete" onClick={() => handleDelete(course.id)} title="Delete">
+                    <button className="cm-action-btn delete" onClick={() => handleDelete(course.id)} title="Delete">
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -262,6 +516,135 @@ const CourseManagement = () => {
                 <button type="submit" className="btn-submit">{editingCourse ? 'Save Changes' : 'Add Course'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isPreviewModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content preview-modal">
+            <div className="modal-header">
+              <div>
+                <h3>{previewFormat === 'pdf' ? 'PDF Report Preview' : 'Excel Report Preview'}</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  {filteredCourses.length} records to export
+                </p>
+              </div>
+              <button className="close-btn" onClick={closePreviewModal}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="preview-body">
+              <div className="preview-info">
+                <div className="preview-info-item">
+                  <strong>Report Type:</strong> Course Management Report
+                </div>
+                <div className="preview-info-item">
+                  <strong>Generated:</strong> {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+                <div className="preview-info-item">
+                  <strong>Total Records:</strong> {filteredCourses.length}
+                </div>
+                {(yearFilter !== 'All' || semesterFilter !== 'All' || searchQuery) && (
+                  <div className="preview-info-item">
+                    <strong>Filters Applied:</strong> {[
+                      yearFilter !== 'All' && `Year: ${yearFilter}`,
+                      semesterFilter !== 'All' && `Semester: ${semesterFilter}`,
+                      searchQuery && `Search: "${searchQuery}"`
+                    ].filter(Boolean).join(', ')}
+                  </div>
+                )}
+              </div>
+
+              <div className="preview-charts">
+                <div className="preview-chart-card">
+                  <h5>Units Distribution</h5>
+                  <div className="preview-chart-container">
+                    <Pie data={unitsChartData} options={chartOptions} />
+                  </div>
+                </div>
+                <div className="preview-chart-card">
+                  <h5>Courses by Year</h5>
+                  <div className="preview-chart-container bar">
+                    <Bar data={yearChartData} options={barOptions} />
+                  </div>
+                </div>
+                <div className="preview-chart-card">
+                  <h5>Courses by Semester</h5>
+                  <div className="preview-chart-container bar">
+                    <Bar data={semesterChartData} options={barOptions} />
+                  </div>
+                </div>
+                <div className="preview-chart-card summary">
+                  <h5>Summary Statistics</h5>
+                  <div className="preview-stats">
+                    <div className="preview-stat-item">
+                      <span className="preview-stat-label">Total Courses</span>
+                      <span className="preview-stat-value">{chartStats.total}</span>
+                    </div>
+                    <div className="preview-stat-item">
+                      <span className="preview-stat-label">Total Units</span>
+                      <span className="preview-stat-value">{chartStats.totalUnits}</span>
+                    </div>
+                    <div className="preview-stat-item">
+                      <span className="preview-stat-label">Avg Units/Course</span>
+                      <span className="preview-stat-value">{chartStats.avgUnits}</span>
+                    </div>
+                    <div className="preview-stat-item">
+                      <span className="preview-stat-label">Year Levels</span>
+                      <span className="preview-stat-value">{chartStats.years}</span>
+                    </div>
+                    <div className="preview-stat-item">
+                      <span className="preview-stat-label">Avg Courses/Year</span>
+                      <span className="preview-stat-value">{chartStats.avgPerYear}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="preview-table-container">
+                <h4 className="preview-section-title">
+                  <PieChart size={18} style={{ marginRight: '8px' }} />
+                  Data Preview (First 10 Records)
+                </h4>
+                <table className="preview-table">
+                  <thead>
+                    <tr>
+                      <th>Course Code</th>
+                      <th>Description</th>
+                      <th>Units</th>
+                      <th>Prerequisites</th>
+                      <th>Year</th>
+                      <th>Semester</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCourses.slice(0, 10).map((course) => (
+                      <tr key={course.id}>
+                        <td>{course.code}</td>
+                        <td>{course.desc}</td>
+                        <td>{course.units}</td>
+                        <td>{course.prereq}</td>
+                        <td>Year {course.year}</td>
+                        <td>{course.sem === 1 ? '1st Sem' : course.sem === 2 ? '2nd Sem' : 'Summer'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="modal-footer preview-footer">
+              <button type="button" className="btn-cancel" onClick={closePreviewModal}>Cancel</button>
+              <button 
+                type="button" 
+                className="btn-submit" 
+                onClick={previewFormat === 'pdf' ? generatePDFReport : generateExcelReport}
+              >
+                {previewFormat === 'pdf' ? 'Download PDF' : 'Download Excel'}
+              </button>
+            </div>
           </div>
         </div>
       )}

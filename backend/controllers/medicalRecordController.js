@@ -333,6 +333,10 @@ const updateMyMedicalRecord = async (req, res) => {
 
 const addMyMedicalDocument = async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+
     const { studentId } = await buildProfileIdentity(req.user);
     const record = await MedicalRecord.findOne({ studentId });
 
@@ -340,19 +344,19 @@ const addMyMedicalDocument = async (req, res) => {
       return res.status(404).json({ message: "Medical record not found" });
     }
 
-    const body = req.body || {};
-
     const document = normalizeDocument({
-      fileName: body.fileName,
-      storedFileName: body.storedFileName,
-      filePath: body.filePath,
-      mimeType: body.mimeType,
-      uploadDate: body.uploadDate || new Date().toISOString().split("T")[0],
-      fileSize: body.fileSize,
+      fileName: req.file.originalname,
+      storedFileName: req.file.filename,
+      filePath: toPublicFilePath(req.file.path),
+      mimeType: req.file.mimetype,
+      uploadDate: new Date().toISOString().split("T")[0],
+      fileSize: `${(req.file.size / 1024).toFixed(2)} KB`,
     });
+
     if (!document) {
+      safeUnlink(req.file.path);
       return res.status(400).json({
-        message: "A valid file is required",
+        message: "Invalid file",
       });
     }
 
@@ -361,6 +365,9 @@ const addMyMedicalDocument = async (req, res) => {
     await updated.populate("event", "title date time location status");
     res.json(formatRecord(updated));
   } catch (error) {
+    if (req.file) {
+      safeUnlink(req.file.path);
+    }
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

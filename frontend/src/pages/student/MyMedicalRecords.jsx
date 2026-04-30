@@ -148,12 +148,14 @@ const MyMedicalRecords = () => {
 
     try {
       setIsUploading(true);
-      const payload = {
-        fileName: file.name,
-        mimeType: file.type || '',
-        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-      };
-      const response = await axios.post('/api/medical-records/me/documents', payload);
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post('/api/medical-records/me/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       setRecord(normalizeMedicalRecord(response.data));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to upload document.');

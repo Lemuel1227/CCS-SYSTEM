@@ -436,10 +436,59 @@ const StudentManagement = () => {
     if (selectedSkills.length > 0) filters.push(`Skills: ${selectedSkills.join(', ')}`);
     if (searchQuery) filters.push(`Search: "${searchQuery}"`);
 
+    let startY = 28;
     if (filters.length > 0) {
       doc.setFontSize(9);
-      doc.text(`Filters: ${filters.join(' | ')}`, 14, 28);
+      doc.text(`Filters: ${filters.join(' | ')}`, 14, startY);
+      startY += 6;
     }
+
+    // Generate summary statistics
+    const statusCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.academicStatus] = (acc[s.academicStatus] || 0) + 1;
+      return acc;
+    }, {});
+    const programCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.program] = (acc[s.program] || 0) + 1;
+      return acc;
+    }, {});
+    const yearCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.yearLevel] = (acc[s.yearLevel] || 0) + 1;
+      return acc;
+    }, {});
+    const genderCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.gender] = (acc[s.gender] || 0) + 1;
+      return acc;
+    }, {});
+    const sectionCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.section || 'Unassigned'] = (acc[s.section || 'Unassigned'] || 0) + 1;
+      return acc;
+    }, {});
+
+    const topSection = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1])[0];
+
+    // Add summary section
+    doc.setFontSize(11);
+    doc.setTextColor(41, 98, 255);
+    doc.text('Summary Statistics', 14, startY + 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    
+    const summaryLines = [
+      `Total Students: ${filteredStudents.length}`,
+      `Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(', ') || 'N/A'}`,
+      `Programs: ${Object.keys(programCounts).length} (${Object.entries(programCounts).map(([k, v]) => `${k}: ${v}`).join(', ')})`,
+      `Year Levels: ${Object.entries(yearCounts).map(([k, v]) => `${k}: ${v}`).join(', ') || 'N/A'}`,
+      `Gender: ${Object.entries(genderCounts).map(([k, v]) => `${k}: ${v}`).join(', ') || 'N/A'}`,
+      topSection ? `Largest Section: ${topSection[0]} (${topSection[1]} students)` : ''
+    ].filter(Boolean);
+
+    let summaryY = startY + 12;
+    summaryLines.forEach((line, index) => {
+      doc.setFont(index === 0 ? 'bold' : 'normal', 'normal');
+      doc.text(line, 14, summaryY);
+      summaryY += 5;
+    });
 
     const tableData = filteredStudents.map(s => [
       s.studentNumber || s.studentNo,
@@ -456,7 +505,7 @@ const StudentManagement = () => {
     autoTable(doc, {
       head: [['Student No.', 'Name', 'Program', 'Year', 'Section', 'Status', 'Email', 'Contact', 'Skills']],
       body: tableData,
-      startY: filters.length > 0 ? 32 : 28,
+      startY: summaryY + 5,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [41, 98, 255], textColor: 255, fontSize: 9 },
       alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -509,7 +558,65 @@ const StudentManagement = () => {
     ];
     ws['!cols'] = colWidths;
 
+    // Generate summary for Excel
+    const statusCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.academicStatus] = (acc[s.academicStatus] || 0) + 1;
+      return acc;
+    }, {});
+    const programCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.program] = (acc[s.program] || 0) + 1;
+      return acc;
+    }, {});
+    const yearCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.yearLevel] = (acc[s.yearLevel] || 0) + 1;
+      return acc;
+    }, {});
+    const genderCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.gender] = (acc[s.gender] || 0) + 1;
+      return acc;
+    }, {});
+    const sectionCounts = filteredStudents.reduce((acc, s) => {
+      acc[s.section || 'Unassigned'] = (acc[s.section || 'Unassigned'] || 0) + 1;
+      return acc;
+    }, {});
+
+    const topSection = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1])[0];
+
+    const filterInfo = [];
+    if (statusFilter !== 'All') filterInfo.push(`Status: ${statusFilter}`);
+    if (selectedSkills.length > 0) filterInfo.push(`Skills: ${selectedSkills.join(', ')}`);
+    if (searchQuery) filterInfo.push(`Search: "${searchQuery}"`);
+
+    const summaryData = [
+      ['Student Management Report'],
+      [`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`],
+      ...(filterInfo.length > 0 ? [['Filters: ' + filterInfo.join(' | ')]] : []),
+      [],
+      ['SUMMARY STATISTICS'],
+      ['Total Students', filteredStudents.length],
+      [],
+      ['BY ACADEMIC STATUS'],
+      ...Object.entries(statusCounts).map(([status, count]) => [status, count, `${((count / filteredStudents.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY PROGRAM'],
+      ...Object.entries(programCounts).map(([program, count]) => [program, count, `${((count / filteredStudents.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY YEAR LEVEL'],
+      ...Object.entries(yearCounts).map(([year, count]) => [year, count, `${((count / filteredStudents.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY GENDER'],
+      ...Object.entries(genderCounts).map(([gender, count]) => [gender, count, `${((count / filteredStudents.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY SECTION (Top 5)'],
+      ...Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([section, count]) => [section, count, `${((count / filteredStudents.length) * 100).toFixed(1)}%`]),
+      ...(topSection ? [['Largest Section', topSection[0], `${topSection[1]} students`]] : [])
+    ];
+
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    summaryWs['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 12 }];
+
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
     XLSX.utils.book_append_sheet(wb, ws, 'Student Report');
 
     XLSX.writeFile(wb, `student_report_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -1354,7 +1461,7 @@ const StudentManagement = () => {
               <div className="preview-table-container">
                 <h4 className="preview-section-title">
                   <PieChart size={18} style={{ marginRight: '8px' }} />
-                  Data Preview (First 10 Records)
+                  Data Preview
                 </h4>
                 <table className="preview-table">
                   <thead>
@@ -1369,7 +1476,7 @@ const StudentManagement = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredStudents.slice(0, 10).map((student) => (
+                    {filteredStudents.map((student) => (
                       <tr key={student.id}>
                         <td>{student.studentNumber || student.studentNo}</td>
                         <td>{`${student.lastName}, ${student.firstName}`}</td>
@@ -1386,12 +1493,7 @@ const StudentManagement = () => {
                     ))}
                   </tbody>
                 </table>
-                {filteredStudents.length > 10 && (
-                  <div className="preview-more">
-                    + {filteredStudents.length - 10} more records...
-                  </div>
-                )}
-              </div>
+                              </div>
             </div>
 
             <div className="modal-footer">

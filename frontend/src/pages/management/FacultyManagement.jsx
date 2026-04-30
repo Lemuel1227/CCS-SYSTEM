@@ -405,10 +405,52 @@ const FacultyManagement = () => {
     if (rankFilter !== 'All') filters.push(`Rank: ${rankFilter}`);
     if (searchQuery) filters.push(`Search: "${searchQuery}"`);
     
+    let startY = 28;
     if (filters.length > 0) {
       doc.setFontSize(9);
-      doc.text(`Filters: ${filters.join(' | ')}`, 14, 28);
+      doc.text(`Filters: ${filters.join(' | ')}`, 14, startY);
+      startY += 6;
     }
+
+    // Generate summary statistics
+    const statusCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.status] = (acc[f.status] || 0) + 1;
+      return acc;
+    }, {});
+    const deptCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.department] = (acc[f.department] || 0) + 1;
+      return acc;
+    }, {});
+    const rankCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.academicRank] = (acc[f.academicRank] || 0) + 1;
+      return acc;
+    }, {});
+    const typeCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.employmentType] = (acc[f.employmentType] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Add summary section
+    doc.setFontSize(11);
+    doc.setTextColor(41, 98, 255);
+    doc.text('Summary Statistics', 14, startY + 6);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    
+    const summaryLines = [
+      `Total Faculty: ${filteredFaculties.length}`,
+      `Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(', ') || 'N/A'}`,
+      `Departments: ${Object.keys(deptCounts).length} (${Object.entries(deptCounts).map(([k, v]) => `${k}: ${v}`).join(', ')})`,
+      `Academic Ranks: ${Object.keys(rankCounts).length} (${Object.entries(rankCounts).map(([k, v]) => `${k}: ${v}`).join(', ')})`,
+      `Employment Types: ${Object.entries(typeCounts).map(([k, v]) => `${k}: ${v}`).join(', ') || 'N/A'}`
+    ].filter(Boolean);
+
+    let summaryY = startY + 12;
+    summaryLines.forEach((line, index) => {
+      doc.setFont(index === 0 ? 'bold' : 'normal', 'normal');
+      doc.text(line, 14, summaryY);
+      summaryY += 5;
+    });
     
     const tableData = filteredFaculties.map(f => [
       f.employeeIdNumber || f.employeeId,
@@ -425,7 +467,7 @@ const FacultyManagement = () => {
     autoTable(doc, {
       head: [['Employee ID', 'Name', 'Dept', 'Rank', 'Type', 'Status', 'Email', 'Contact', 'Specializations']],
       body: tableData,
-      startY: filters.length > 0 ? 32 : 28,
+      startY: summaryY + 5,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [41, 98, 255], textColor: 255, fontSize: 9 },
       alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -476,7 +518,56 @@ const FacultyManagement = () => {
     ];
     ws['!cols'] = colWidths;
     
+    // Generate summary for Excel
+    const statusCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.status] = (acc[f.status] || 0) + 1;
+      return acc;
+    }, {});
+    const deptCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.department] = (acc[f.department] || 0) + 1;
+      return acc;
+    }, {});
+    const rankCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.academicRank] = (acc[f.academicRank] || 0) + 1;
+      return acc;
+    }, {});
+    const typeCounts = filteredFaculties.reduce((acc, f) => {
+      acc[f.employmentType] = (acc[f.employmentType] || 0) + 1;
+      return acc;
+    }, {});
+
+    const filterInfo = [];
+    if (departmentFilter !== 'All') filterInfo.push(`Department: ${departmentFilter}`);
+    if (statusFilter !== 'All') filterInfo.push(`Status: ${statusFilter}`);
+    if (rankFilter !== 'All') filterInfo.push(`Rank: ${rankFilter}`);
+    if (searchQuery) filterInfo.push(`Search: "${searchQuery}"`);
+
+    const summaryData = [
+      ['Faculty Management Report'],
+      [`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`],
+      ...(filterInfo.length > 0 ? [['Filters: ' + filterInfo.join(' | ')]] : []),
+      [],
+      ['SUMMARY STATISTICS'],
+      ['Total Faculty', filteredFaculties.length],
+      [],
+      ['BY STATUS'],
+      ...Object.entries(statusCounts).map(([status, count]) => [status, count, `${((count / filteredFaculties.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY DEPARTMENT'],
+      ...Object.entries(deptCounts).map(([dept, count]) => [dept, count, `${((count / filteredFaculties.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY ACADEMIC RANK'],
+      ...Object.entries(rankCounts).map(([rank, count]) => [rank, count, `${((count / filteredFaculties.length) * 100).toFixed(1)}%`]),
+      [],
+      ['BY EMPLOYMENT TYPE'],
+      ...Object.entries(typeCounts).map(([type, count]) => [type, count, `${((count / filteredFaculties.length) * 100).toFixed(1)}%`])
+    ];
+
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    summaryWs['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 12 }];
+
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
     XLSX.utils.book_append_sheet(wb, ws, 'Faculty Report');
     
     XLSX.writeFile(wb, `faculty_report_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -1086,7 +1177,7 @@ const FacultyManagement = () => {
               <div className="preview-table-container">
                 <h4 className="preview-section-title">
                   <PieChart size={18} style={{ marginRight: '8px' }} />
-                  Data Preview (First 10 Records)
+                  Data Preview
                 </h4>
                 <table className="preview-table">
                   <thead>
@@ -1101,7 +1192,7 @@ const FacultyManagement = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredFaculties.slice(0, 10).map((faculty) => (
+                    {filteredFaculties.map((faculty) => (
                       <tr key={faculty.id}>
                         <td>{faculty.employeeIdNumber || faculty.employeeId}</td>
                         <td>{`${faculty.lastName}, ${faculty.firstName}`}</td>
@@ -1118,12 +1209,7 @@ const FacultyManagement = () => {
                     ))}
                   </tbody>
                 </table>
-                {filteredFaculties.length > 10 && (
-                  <div className="preview-more">
-                    + {filteredFaculties.length - 10} more records...
-                  </div>
-                )}
-              </div>
+                              </div>
             </div>
 
             <div className="modal-footer">

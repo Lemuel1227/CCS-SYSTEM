@@ -1,13 +1,16 @@
 const SchoolYearSemester = require("../../models/SchoolYearSemester");
 const Section = require("../../models/Section");
+const AcademicTrack = require("../../models/AcademicTrack");
 const { connectAndRun } = require("./shared");
 const { schoolYearsToSeed } = require("./data");
 
 const SECTION_PATTERNS = [
   { sectionName: "1IT-A", yearLevel: "1st Year", program: "BSIT" },
   { sectionName: "1IT-B", yearLevel: "1st Year", program: "BSIT" },
+  { sectionName: "1IT-C", yearLevel: "1st Year", program: "BSIT" },
   { sectionName: "2IT-A", yearLevel: "2nd Year", program: "BSIT" },
   { sectionName: "2IT-B", yearLevel: "2nd Year", program: "BSIT" },
+  { sectionName: "2IT-C", yearLevel: "2nd Year", program: "BSIT" },
   { sectionName: "3IT-A", yearLevel: "3rd Year", program: "BSIT" },
   { sectionName: "3IT-B", yearLevel: "3rd Year", program: "BSIT" },
   { sectionName: "4IT-A", yearLevel: "4th Year", program: "BSIT" },
@@ -56,8 +59,13 @@ const seedSchoolYearSectionsCore = async ({ reset = false, userMap } = {}) => {
     await SchoolYearSemester.updateMany({ _id: { $nin: currentIds } }, { isCurrent: false });
   }
 
+  const bsitTrack = await AcademicTrack.findOne({ code: "BSIT" });
+  const bscsTrack = await AcademicTrack.findOne({ code: "BSCS" });
+
   for (const schoolYearDoc of schoolYearDocs.values()) {
     for (const sectionPattern of SECTION_PATTERNS) {
+      const academicTrack = sectionPattern.program === "BSIT" ? bsitTrack?._id : sectionPattern.program === "BSCS" ? bscsTrack?._id : null;
+      
       await Section.findOneAndUpdate(
         { schoolYearSemester: schoolYearDoc._id, sectionName: sectionPattern.sectionName },
         {
@@ -65,6 +73,7 @@ const seedSchoolYearSectionsCore = async ({ reset = false, userMap } = {}) => {
           sectionName: sectionPattern.sectionName,
           yearLevel: sectionPattern.yearLevel,
           program: sectionPattern.program,
+          academicTrack,
           maxStudents: 45,
           createdBy: adminUser?._id,
         },

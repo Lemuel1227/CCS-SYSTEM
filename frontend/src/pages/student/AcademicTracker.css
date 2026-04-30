@@ -130,6 +130,12 @@
   border: 1px solid var(--primary-light);
 }
 
+.at-status-badge.failed {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
 tfoot {
   background-color: var(--bg-surface);
 }

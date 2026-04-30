@@ -13,7 +13,7 @@ const MySchedule = () => {
     const loadSchedule = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/students/me/schedule');
+        const response = await axios.get('/api/class-schedules/me');
         setSchedules(response.data || []);
       } catch (err) {
         console.error('Failed to load schedule:', err);
@@ -35,6 +35,7 @@ const MySchedule = () => {
     day: item.dayOfWeek,
     room: item.roomName,
     instructor: item.faculty ? [item.faculty.firstName, item.faculty.lastName].filter(Boolean).join(' ') : 'TBA',
+    section: item.section?.sectionName || 'TBA',
     type: item.scheduleType || 'Lecture'
   }));
 
@@ -121,10 +122,18 @@ const MySchedule = () => {
                             <MapPin size={15} />
                             <span>{cls.room}</span>
                           </div>
-                          <div className="meta-item">
-                            <User size={15} />
-                            <span>{cls.instructor}</span>
-                          </div>
+                          {cls.section && (
+                            <div className="meta-item">
+                              <User size={15} />
+                              <span>{cls.section}</span>
+                            </div>
+                          )}
+                          {cls.instructor && cls.instructor !== 'TBA' && (
+                            <div className="meta-item">
+                              <User size={15} />
+                              <span>{cls.instructor}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

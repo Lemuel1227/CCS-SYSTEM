@@ -7,18 +7,19 @@ const {
   createClassSchedule,
   updateClassSchedule,
   deleteClassSchedule,
+  getMySchedule,
 } = require("../controllers/classScheduleController");
 const { protect, adminOrFaculty } = require("../middlewares/authMiddleware");
 
-router.use(protect, adminOrFaculty);
+// User-specific routes (accessible by students and faculty)
+router.get("/me", protect, getMySchedule);
+router.get("/options", protect, adminOrFaculty, getClassScheduleOptions);
 
-router.get("/options", getClassScheduleOptions);
-
-router.route("/").get(getClassSchedules).post(createClassSchedule);
-router
-  .route("/:id")
-  .get(getClassScheduleById)
-  .put(updateClassSchedule)
-  .delete(deleteClassSchedule);
+// Admin/Faculty only routes
+router.get("/", protect, adminOrFaculty, getClassSchedules);
+router.post("/", protect, adminOrFaculty, createClassSchedule);
+router.get("/:id", protect, adminOrFaculty, getClassScheduleById);
+router.put("/:id", protect, adminOrFaculty, updateClassSchedule);
+router.delete("/:id", protect, adminOrFaculty, deleteClassSchedule);
 
 module.exports = router;

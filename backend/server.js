@@ -30,6 +30,7 @@ const violationRoutes = require("./routes/violationRoutes");
 const violationTypeRoutes = require("./routes/violationTypeRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const clubOrgRoutes = require("./routes/clubOrgRoutes");
+const gradeRoutes = require("./routes/gradeRoutes");
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/faculty", facultyRoutes);
@@ -43,6 +44,7 @@ app.use("/api/violations", violationRoutes);
 app.use("/api/violation-types", violationTypeRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/clubs-orgs", clubOrgRoutes);
+app.use("/api/grades", gradeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -528,7 +528,11 @@ const ScheduleManagement = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'schoolYearSemester') {
-      setFormData((prev) => ({ ...prev, schoolYearSemester: value, section: '' }));
+      setFormData((prev) => ({ ...prev, schoolYearSemester: value, section: '', course: '' }));
+      return;
+    }
+    if (name === 'section') {
+      setFormData((prev) => ({ ...prev, section: value, course: '' }));
       return;
     }
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -566,10 +570,36 @@ const ScheduleManagement = () => {
   const filteredCourseOptions = useMemo(() => {
     if (!formData.section) return courseOptions;
     const selectedSection = sectionOptions.find((s) => s._id === formData.section);
-    if (!selectedSection || !selectedSection.academicTrack) return courseOptions;
-    const trackCourseIds = selectedSection.academicTrack.courses?.map(c => typeof c === 'object' ? c._id : c) || [];
-    if (trackCourseIds.length === 0) return courseOptions;
-    return courseOptions.filter((course) => trackCourseIds.includes(course._id));
+    if (!selectedSection) return courseOptions;
+    
+    console.log('Selected section:', selectedSection);
+    console.log('Academic track:', selectedSection.academicTrack);
+    
+    // First try to filter by academic track
+    if (selectedSection.academicTrack && selectedSection.academicTrack.courses && selectedSection.academicTrack.courses.length > 0) {
+      const trackCourseIds = selectedSection.academicTrack.courses.map(c => typeof c === 'object' ? c._id : c);
+      console.log('Track course IDs:', trackCourseIds);
+      const filtered = courseOptions.filter((course) => trackCourseIds.includes(course._id));
+      console.log('Filtered by track:', filtered);
+      if (filtered.length > 0) return filtered;
+    }
+    
+    // Fallback: filter by year level if no academic track or no matching courses
+    const yearLevel = selectedSection.yearLevel;
+    let yearNumber = null;
+    if (yearLevel) {
+      const match = yearLevel.match(/(\d+)/);
+      if (match) yearNumber = parseInt(match[1]);
+    }
+    console.log('Year level:', yearLevel, 'Extracted year:', yearNumber);
+    if (yearNumber) {
+      const filtered = courseOptions.filter((course) => course.year === yearNumber);
+      console.log('Filtered by year:', filtered);
+      return filtered;
+    }
+    
+    console.log('No filter applied, returning all courses');
+    return courseOptions;
   }, [formData.section, sectionOptions, courseOptions]);
 
   const getUnscheduledCourses = (sectionId) => {

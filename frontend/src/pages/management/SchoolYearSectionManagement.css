@@ -71,6 +71,8 @@
 
 .sys-table-wrap {
   overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .sys-table {

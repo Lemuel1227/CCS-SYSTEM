@@ -253,37 +253,78 @@ const facultyProfilesToSeed = [...DEFAULT_FACULTY_PROFILES, ...facultySeed.profi
 const studentProfilesToSeed = [...DEFAULT_STUDENT_PROFILES, ...studentSeed.profiles];
 
 const coursesToSeed = [
+  // 1st Year, 1st Semester
   { code: "CCS101", desc: "Introduction to Computing", units: 3, prereq: "--", year: 1, sem: 1 },
   { code: "CCS102", desc: "Computer Programming 1", units: 3, prereq: "--", year: 1, sem: 1 },
   { code: "MAT101", desc: "Mathematics in the Modern World", units: 3, prereq: "--", year: 1, sem: 1 },
   { code: "COM101", desc: "Purposive Communication", units: 3, prereq: "--", year: 1, sem: 1 },
   { code: "NSTP1", desc: "National Service Training Program 1", units: 3, prereq: "--", year: 1, sem: 1 },
   { code: "PED101", desc: "Physical Education 1", units: 2, prereq: "--", year: 1, sem: 1 },
+  { code: "PSY100", desc: "Understanding the Self", units: 3, prereq: "--", year: 1, sem: 1 },
+  
+  // 1st Year, 2nd Semester
   { code: "CCS103", desc: "Computer Programming 2", units: 3, prereq: "CCS102", year: 1, sem: 2 },
   { code: "CCS104", desc: "Discrete Structures 1", units: 3, prereq: "MAT101", year: 1, sem: 2 },
   { code: "CCS105", desc: "Human Computer Interaction 1", units: 3, prereq: "CCS101", year: 1, sem: 2 },
   { code: "CCS106", desc: "Social and Professional Issues", units: 3, prereq: "--", year: 1, sem: 2 },
+  { code: "NSTP2", desc: "National Service Training Program 2", units: 3, prereq: "NSTP1", year: 1, sem: 2 },
+  { code: "PED102", desc: "Physical Education 2", units: 2, prereq: "PED101", year: 1, sem: 2 },
+  { code: "GAD101", desc: "Gender and Development", units: 3, prereq: "--", year: 1, sem: 2 },
+  { code: "ETH101", desc: "Ethics", units: 3, prereq: "--", year: 1, sem: 2 },
+  
+  // 2nd Year, 1st Semester
   { code: "CCS201", desc: "Data Structures and Algorithms", units: 3, prereq: "CCS103", year: 2, sem: 1 },
   { code: "CCS202", desc: "Object-Oriented Programming", units: 3, prereq: "CCS103", year: 2, sem: 1 },
   { code: "CCS203", desc: "Database Management Systems", units: 3, prereq: "CCS104", year: 2, sem: 1 },
+  { code: "MAT201", desc: "Discrete Mathematics", units: 3, prereq: "MAT101", year: 2, sem: 1 },
+  { code: "PED103", desc: "Physical Education 3", units: 2, prereq: "PED102", year: 2, sem: 1 },
+  
+  // 2nd Year, 2nd Semester
   { code: "CCS204", desc: "Operating Systems", units: 3, prereq: "CCS201", year: 2, sem: 2 },
   { code: "CCS205", desc: "Web Systems and Technologies", units: 3, prereq: "CCS202", year: 2, sem: 2 },
   { code: "CCS206", desc: "Information Management", units: 3, prereq: "CCS203", year: 2, sem: 2 },
+  { code: "CCS207", desc: "Computer Organization and Architecture", units: 3, prereq: "CCS201", year: 2, sem: 2 },
+  { code: "PED104", desc: "Physical Education 4", units: 2, prereq: "PED103", year: 2, sem: 2 },
+  
+  // 3rd Year, 1st Semester
   { code: "CCS301", desc: "Software Engineering", units: 3, prereq: "CCS205", year: 3, sem: 1 },
   { code: "CCS302", desc: "Computer Networks", units: 3, prereq: "CCS204", year: 3, sem: 1 },
   { code: "CCS303", desc: "Applications Development", units: 3, prereq: "CCS205", year: 3, sem: 1 },
+  { code: "CCS308", desc: "Advanced Database Systems", units: 3, prereq: "CCS203", year: 3, sem: 1 },
+  { code: "RIZ101", desc: "Life and Works of Rizal", units: 3, prereq: "--", year: 3, sem: 1 },
+  
+  // 3rd Year, 2nd Semester
   { code: "CCS304", desc: "Information Assurance and Security", units: 3, prereq: "CCS302", year: 3, sem: 2 },
   { code: "CCS305", desc: "Platform Technologies", units: 3, prereq: "CCS303", year: 3, sem: 2 },
   { code: "CCS306", desc: "System Integration and Architecture", units: 3, prereq: "CCS301", year: 3, sem: 2 },
+  { code: "CCS309", desc: "Machine Learning Fundamentals", units: 3, prereq: "CCS201", year: 3, sem: 2 },
+  { code: "LIT101", desc: "Philippine Literature", units: 3, prereq: "--", year: 3, sem: 2 },
+  
+  // 4th Year, 1st Semester
   { code: "CCS401", desc: "Capstone Project 1", units: 3, prereq: "CCS306", year: 4, sem: 1 },
+  { code: "CCS404", desc: "Mobile Application Development", units: 3, prereq: "CCS303", year: 4, sem: 1 },
+  { code: "CCS405", desc: "Cloud Computing", units: 3, prereq: "CCS302", year: 4, sem: 1 },
+  { code: "CCS406", desc: "Internet of Things", units: 3, prereq: "CCS305", year: 4, sem: 1 },
+  { code: "ENT101", desc: "Entrepreneurship", units: 3, prereq: "--", year: 4, sem: 1 },
+  
+  // 4th Year, 2nd Semester
   { code: "CCS402", desc: "Capstone Project 2", units: 3, prereq: "CCS401", year: 4, sem: 2 },
   { code: "CCS403", desc: "Professional Issues in Computing", units: 3, prereq: "--", year: 4, sem: 2 },
+  { code: "CCS407", desc: "Data Science and Analytics", units: 3, prereq: "CCS309", year: 4, sem: 2 },
+  { code: "CCS408", desc: "DevOps and Continuous Integration", units: 3, prereq: "CCS305", year: 4, sem: 2 },
+  { code: "PRACT1", desc: "Practicum 1", units: 3, prereq: "CCS401", year: 4, sem: 2 },
 ];
 
 const schoolYearsToSeed = [
-  { schoolYear: "2025-2026", semester: "1st", isCurrent: false, startDate: "2025-08-12", endDate: "2025-12-18" },
-  { schoolYear: "2025-2026", semester: "2nd", isCurrent: true, startDate: "2026-01-08", endDate: "2026-05-24" },
-  { schoolYear: "2026-2027", semester: "1st", isCurrent: false, startDate: "2026-08-10", endDate: "2026-12-19" },
+  { schoolYear: "2022-2023", semester: "1st", isCurrent: false, startDate: "2022-08-15", endDate: "2022-12-16" },
+  { schoolYear: "2022-2023", semester: "2nd", isCurrent: false, startDate: "2023-01-09", endDate: "2023-05-26" },
+  { schoolYear: "2023-2024", semester: "1st", isCurrent: false, startDate: "2023-08-14", endDate: "2023-12-15" },
+  { schoolYear: "2023-2024", semester: "2nd", isCurrent: false, startDate: "2024-01-08", endDate: "2024-05-24" },
+  { schoolYear: "2024-2025", semester: "1st", isCurrent: false, startDate: "2024-08-12", endDate: "2024-12-20" },
+  { schoolYear: "2024-2025", semester: "2nd", isCurrent: false, startDate: "2025-01-06", endDate: "2025-05-23" },
+  { schoolYear: "2025-2026", semester: "1st", isCurrent: false, startDate: "2025-08-11", endDate: "2025-12-19" },
+  { schoolYear: "2025-2026", semester: "2nd", isCurrent: true, startDate: "2026-01-05", endDate: "2026-05-22" },
+  { schoolYear: "2026-2027", semester: "1st", isCurrent: false, startDate: "2026-08-10", endDate: "2026-12-18" },
 ];
 
 const violationTypesToSeed = [
